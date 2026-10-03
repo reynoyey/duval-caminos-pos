@@ -122,9 +122,9 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       <main className="flex-1 min-h-0 overflow-hidden">
         {/* TAB 1: POS Cashier Register */}
         {activeTab === "REGISTER" && (
-          <div className="flex h-full w-full gap-3 p-3 lg:p-4 overflow-hidden">
-            {/* Left Screen: Order Header & Menu Catalog (65% width) */}
-            <div className="flex flex-col gap-3 min-w-0 min-h-0 overflow-hidden w-full lg:w-[65%]">
+          <div className="flex flex-col md:flex-row h-full w-full gap-2.5 sm:gap-3 p-2.5 sm:p-3 lg:p-4 overflow-hidden">
+            {/* Left Screen: Order Header & Menu Catalog */}
+            <div className="flex flex-col gap-2.5 sm:gap-3 min-w-0 min-h-0 overflow-hidden flex-1 md:w-[58%] lg:w-[63%] xl:w-[66%]">
               <OrderHeader nameRef={nameInputRef} nameInvalid={nameInvalid} />
               <MenuCatalog
                 catalog={initialCatalog}
@@ -135,6 +135,7 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
 
             {/* Right Screen: Sticky Cart Panel */}
             <CartPanel
+              className="h-auto md:h-full md:w-[42%] lg:w-[37%] xl:w-[34%] shrink-0"
               onEditLine={handleEditLine}
               onOpenDiscount={() => setIsDiscountOpen(true)}
               onCheckout={handleCheckoutClick}

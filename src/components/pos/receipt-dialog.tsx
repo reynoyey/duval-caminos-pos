@@ -20,6 +20,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   const storeName = useSettingsStore((s) => s.storeName);
+  const storeAddress = useSettingsStore((s) => s.storeAddress);
   const cashierName = useSettingsStore((s) => s.cashierName);
 
   if (!order) return null;
@@ -222,8 +223,9 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
                 <div className="text-center pb-2 border-b border-dashed border-stone-400">
                   <h3 className="font-extrabold text-sm tracking-wider">{storeName.toUpperCase()}</h3>
                   <p className="text-[10px] text-stone-600 font-sans">Specialty Coffee & To-Go</p>
-                  <p className="text-[9px] text-stone-500 font-sans">Jl. Senopati No. 42, Kebayoran Baru</p>
-                  <p className="text-[9px] text-stone-500 font-sans">South Jakarta, Indonesia</p>
+                  <p className="text-[9px] text-stone-600 font-sans max-w-[240px] mx-auto leading-tight mt-0.5">
+                    {storeAddress || "Jl. Kebon Jeruk Raya No. 27, Kemanggisan, Palmerah, Jakarta Barat"}
+                  </p>
                 </div>
 
                 <div className="text-[10px] space-y-0.5 pb-2 border-b border-dashed border-stone-400">

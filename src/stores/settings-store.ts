@@ -7,12 +7,14 @@ interface SettingsState {
   cashierName: string;
   storeName: string;
   storeTagline: string;
+  storeAddress: string;
   logoUrl: string;
 
   setCashierName: (name: string) => void;
   setLogoUrl: (url: string) => void;
   setStoreName: (name: string) => void;
   setStoreTagline: (tagline: string) => void;
+  setStoreAddress: (address: string) => void;
   resetSettings: () => void;
 }
 
@@ -20,6 +22,7 @@ export const DEFAULT_SETTINGS = {
   cashierName: "Alex Rivera",
   storeName: "Duval Caminos Coffee",
   storeTagline: "South Beach Counter POS & Barista Tracker",
+  storeAddress: "Jl. Kebon Jeruk Raya No. 27, Kemanggisan, Palmerah, Jakarta Barat",
   logoUrl: "/logo.jpg",
 };
 
@@ -32,11 +35,13 @@ export const useSettingsStore = create<SettingsState>()(
       setLogoUrl: (logoUrl) => set({ logoUrl }),
       setStoreName: (storeName) => set({ storeName: storeName.trim() || DEFAULT_SETTINGS.storeName }),
       setStoreTagline: (storeTagline) => set({ storeTagline: storeTagline.trim() || DEFAULT_SETTINGS.storeTagline }),
+      setStoreAddress: (storeAddress) => set({ storeAddress: storeAddress.trim() || DEFAULT_SETTINGS.storeAddress }),
       resetSettings: () => set(DEFAULT_SETTINGS),
     }),
     {
-      name: "duval-pos-settings-v1",
+      name: "duval-pos-settings-v2",
       storage: createJSONStorage(() => localStorage),
     }
   )
 );
+

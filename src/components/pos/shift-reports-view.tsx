@@ -48,8 +48,8 @@ export function ShiftReportsView() {
   );
   const [shiftFilter, setShiftFilter] = useState<ShiftRangeFilter>("ALL");
 
-  // Cash Reconciliation state
-  const [startingFloat, setStartingFloat] = useState<number>(300000);
+  // Cash Reconciliation state - defaults to 0 as requested
+  const [startingFloat, setStartingFloat] = useState<number>(0);
   const [countedCashStr, setCountedCashStr] = useState<string>("");
 
   // Filter orders according to date and shift range
@@ -268,44 +268,44 @@ export function ShiftReportsView() {
           </h3>
 
           <div className="space-y-2.5 text-xs">
-            <div className="flex items-center justify-between p-2.5 rounded-xl border border-stone-800 bg-stone-900/50">
-              <span className="flex items-center gap-2 text-stone-300">
+            <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
+              <span className="flex items-center gap-2 text-slate-300">
                 <Banknote className="w-4 h-4 text-emerald-400" /> Cash Tendered
               </span>
-              <span className="font-mono font-bold text-stone-100">{formatRupiah(summary.cashSales)}</span>
+              <span className="font-mono font-bold text-white">{formatRupiah(summary.cashSales)}</span>
             </div>
 
-            <div className="flex items-center justify-between p-2.5 rounded-xl border border-stone-800 bg-stone-900/50">
-              <span className="flex items-center gap-2 text-stone-300">
+            <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
+              <span className="flex items-center gap-2 text-slate-300">
                 <QrCode className="w-4 h-4 text-sky-400" /> QRIS Dynamic Sales
               </span>
-              <span className="font-mono font-bold text-stone-100">{formatRupiah(summary.qrisSales)}</span>
+              <span className="font-mono font-bold text-white">{formatRupiah(summary.qrisSales)}</span>
             </div>
 
-            <div className="flex items-center justify-between p-2.5 rounded-xl border border-stone-800 bg-stone-900/50">
-              <span className="flex items-center gap-2 text-stone-300">
+            <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
+              <span className="flex items-center gap-2 text-slate-300">
                 <CreditCard className="w-4 h-4 text-purple-400" /> Debit EDC / Card Total
               </span>
-              <span className="font-mono font-bold text-stone-100">{formatRupiah(summary.debitSales)}</span>
+              <span className="font-mono font-bold text-white">{formatRupiah(summary.debitSales)}</span>
             </div>
           </div>
         </div>
 
         {/* Tax & Reconciliation Discrepancy Box */}
-        <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-stone-300 mb-3 flex items-center gap-2">
-            <Percent className="w-4 h-4 text-amber-500" />
+        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-5 shadow-sm">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-2">
+            <Percent className="w-4 h-4 text-amber-400" />
             <span>Tax & Drawer Cash Reconciliation</span>
           </h3>
 
           <div className="space-y-2.5 text-xs">
-            <div className="flex items-center justify-between p-2.5 rounded-xl border border-stone-800 bg-stone-900/50">
-              <span className="text-stone-300">Gross Sales (Item Subtotals)</span>
-              <span className="font-mono font-bold text-stone-100">{formatRupiah(summary.grossSales)}</span>
+            <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
+              <span className="text-slate-300">Gross Sales (Item Subtotals)</span>
+              <span className="font-mono font-bold text-white">{formatRupiah(summary.grossSales)}</span>
             </div>
 
-            <div className="flex items-center justify-between p-2.5 rounded-xl border border-stone-800 bg-stone-900/50">
-              <span className="text-stone-300">Restaurant Tax (PB1 10%) Collected</span>
+            <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
+              <span className="text-slate-300">Restaurant Tax (PB1 10%) Collected</span>
               <span className="font-mono font-bold text-amber-400">{formatRupiah(summary.totalTax)}</span>
             </div>
 
@@ -313,7 +313,7 @@ export function ShiftReportsView() {
               className={cn(
                 "flex items-center justify-between p-2.5 rounded-xl border",
                 countedCash === 0
-                  ? "border-stone-800 bg-stone-900/50 text-stone-400"
+                  ? "border-white/10 bg-[#161F30] text-slate-400"
                   : cashDiscrepancy === 0
                   ? "border-emerald-500/50 bg-emerald-950/20 text-emerald-300 font-bold"
                   : "border-red-500/50 bg-red-950/20 text-red-300 font-bold"
@@ -333,16 +333,16 @@ export function ShiftReportsView() {
       </div>
 
       {/* Spreadsheet Preview Info Banner */}
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-900 p-4 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+          <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
             <FileSpreadsheet className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-stone-100">
+            <h4 className="text-xs font-bold text-white">
               Multi-Sheet Excel Report Engine (.xlsx)
             </h4>
-            <p className="text-[11px] text-stone-400 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               Includes 3 dedicated sheets: <strong>Sheet 1 (Shift Summary & Reconciliation)</strong>, <strong>Sheet 2 (Detailed Transaction Log)</strong>, and <strong>Sheet 3 (Ingredient Depletion: Oat milk liters & Extra shots)</strong>.
             </p>
           </div>
@@ -452,23 +452,23 @@ export function ShiftReportsView() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-[10px] text-stone-400">Opening Float (Modal Laci)</span>
+                  <span className="text-[10px] text-slate-400">Opening Float (Modal Laci)</span>
                   <Input
                     type="number"
                     value={startingFloat}
                     onChange={(e) => setStartingFloat(Number(e.target.value) || 0)}
-                    className="h-9 text-xs font-mono bg-stone-950 border-stone-800 text-stone-100 mt-1"
+                    className="h-9 text-xs font-mono bg-[#161F30] border border-white/10 text-white mt-1"
                   />
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-stone-400">Counted Physical Cash</span>
+                  <span className="text-[10px] text-slate-400">Counted Physical Cash</span>
                   <Input
                     type="text"
                     value={countedCashStr}
                     onChange={(e) => setCountedCashStr(e.target.value)}
-                    placeholder="e.g. 1500000"
-                    className="h-9 text-xs font-mono bg-stone-950 border-stone-800 text-stone-100 mt-1"
+                    placeholder="e.g. 500000"
+                    className="h-9 text-xs font-mono bg-[#161F30] border border-white/10 text-white mt-1"
                   />
                 </div>
               </div>

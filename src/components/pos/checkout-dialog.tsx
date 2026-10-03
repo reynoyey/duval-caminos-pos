@@ -73,9 +73,7 @@ export function CheckoutDialog({
 
     try {
       const now = new Date();
-      const dateKey = now.toISOString().slice(2, 10).replace(/-/g, "");
-      const queueNumber = Math.floor(1 + Math.random() * 99);
-      const orderNumber = `DCC-${dateKey}-${String(queueNumber).padStart(4, "0")}`;
+      const { queueNumber, orderNumber } = useOrdersStore.getState().getNextOrderNumber();
 
       const newOrder: OrderRecordDTO = {
         id: "ord-" + Math.random().toString(36).slice(2, 9),

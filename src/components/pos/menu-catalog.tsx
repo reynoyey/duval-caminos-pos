@@ -103,16 +103,16 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
         </nav>
 
         {/* Quick Search & Menu Manager Shortcut */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="relative w-48 sm:w-56 lg:w-60">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="relative w-32 sm:w-44 lg:w-52">
             <Search className="pointer-events-none absolute top-1/2 left-3 w-3.5 h-3.5 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search menu... (/)"
-              className="h-10 w-full rounded-xl border border-white/10 bg-[#111726] pr-8 pl-8 text-xs font-medium text-white placeholder:text-slate-500 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-sm"
+              placeholder="Search... (/)"
+              className="h-10 w-full rounded-xl border border-white/10 bg-[#111726] pr-7 pl-8 text-xs font-medium text-white placeholder:text-slate-500 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-sm"
             />
             {query && (
               <button
@@ -128,11 +128,11 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
             <button
               type="button"
               onClick={onOpenMenuManager}
-              className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl border border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white font-medium text-xs shadow-sm shrink-0 transition-all"
+              className="flex items-center gap-1.5 h-10 px-2.5 sm:px-3.5 rounded-xl border border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white font-medium text-xs shadow-sm shrink-0 transition-all"
               title="Kelola, tambah, atau hapus menu"
             >
               <Plus className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Add/Hapus Menu</span>
+              <span className="hidden md:inline">Menu Editor</span>
             </button>
           )}
         </div>
@@ -142,7 +142,7 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
       <div
         id="product-grid"
         tabIndex={0}
-        className="no-scrollbar grid flex-1 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 content-start focus:outline-none"
+        className="no-scrollbar grid flex-1 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3 overflow-y-auto pr-1 content-start focus:outline-none"
       >
         {filtered.map((product) => {
           const inCart = qtyByProduct[product.id] ?? 0;
@@ -157,7 +157,7 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
               disabled={!product.isAvailable}
               onClick={() => onPick(product)}
               className={cn(
-                "group relative flex min-h-[150px] flex-col justify-between rounded-2xl border p-3.5 text-left transition-all duration-150 select-none shadow-sm",
+                "group relative flex min-h-[135px] sm:min-h-[145px] flex-col justify-between rounded-2xl border p-3 sm:p-3.5 text-left transition-all duration-150 select-none shadow-sm",
                 "bg-[#121826] hover:bg-[#161F30] border-white/10 hover:border-white/20",
                 product.isAvailable
                   ? "active:scale-[0.99]"

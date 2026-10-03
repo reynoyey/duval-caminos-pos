@@ -52,12 +52,12 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
   const restWords = nameWords.slice(1).join(" ") || "Caminos Coffee";
 
   return (
-    <header className="h-14 border-b border-white/10 bg-[#0E131F]/90 backdrop-blur-md px-4 flex items-center justify-between shrink-0 select-none z-30 shadow-sm">
+    <header className="h-14 border-b border-white/10 bg-[#0E131F]/90 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between shrink-0 select-none z-30 shadow-sm gap-2">
       {/* Brand */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <div
           onClick={onOpenSettings}
-          className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#161D2B] flex items-center justify-center cursor-pointer hover:ring-rose-500/50 transition-all shadow-sm"
+          className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#161D2B] flex items-center justify-center cursor-pointer hover:ring-rose-500/50 transition-all shadow-sm shrink-0"
           title="Klik untuk ganti logo di Settings"
         >
           <Image
@@ -68,44 +68,48 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
             priority
           />
         </div>
-        <div>
-          <h1 className="font-heading text-sm sm:text-base font-bold tracking-tight text-white leading-tight">
+        <div className="min-w-0">
+          <h1 className="font-heading text-xs sm:text-sm md:text-base font-bold tracking-tight text-white leading-tight truncate max-w-[130px] sm:max-w-[200px] md:max-w-none">
             {storeName}
           </h1>
-          <p className="text-[11px] text-slate-400 font-medium leading-tight mt-0.5">{storeTagline}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium leading-tight mt-0.5 hidden xl:block truncate max-w-[240px]">
+            {storeTagline}
+          </p>
         </div>
       </div>
 
       {/* Main Mode Navigation Tabs */}
-      <nav className="flex items-center bg-[#111726] p-1 rounded-xl border border-white/10 shadow-sm">
+      <nav className="flex items-center bg-[#111726] p-1 rounded-xl border border-white/10 shadow-sm shrink-0">
         <button
           type="button"
           onClick={() => onTabChange("REGISTER")}
           className={cn(
-            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
+            "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
             activeTab === "REGISTER"
               ? "bg-[#1E293B] text-white shadow-sm border border-white/10"
               : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
-          <Coffee className="w-3.5 h-3.5 text-rose-400" />
-          <span>POS Register</span>
+          <Coffee className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+          <span className="hidden md:inline">POS Register</span>
+          <span className="md:hidden">Register</span>
         </button>
 
         <button
           type="button"
           onClick={() => onTabChange("ORDERS_QUEUE")}
           className={cn(
-            "relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
+            "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
             activeTab === "ORDERS_QUEUE"
               ? "bg-[#1E293B] text-white shadow-sm border border-white/10"
               : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
-          <Flame className={cn("w-3.5 h-3.5", processingCount > 0 ? "text-cyan-400" : "text-slate-400")} />
-          <span>Live Orders</span>
+          <Flame className={cn("w-3.5 h-3.5 shrink-0", processingCount > 0 ? "text-cyan-400" : "text-slate-400")} />
+          <span className="hidden md:inline">Live Orders</span>
+          <span className="md:hidden">Orders</span>
           {processingCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
               {processingCount}
             </span>
           )}
@@ -115,14 +119,15 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
           type="button"
           onClick={() => onTabChange("MENU_MANAGER")}
           className={cn(
-            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
+            "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
             activeTab === "MENU_MANAGER"
               ? "bg-[#1E293B] text-white shadow-sm border border-white/10"
               : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
-          <Utensils className="w-3.5 h-3.5 text-amber-400" />
-          <span>Menu Manager</span>
+          <Utensils className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="hidden md:inline">Menu Manager</span>
+          <span className="md:hidden">Menu</span>
           <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white/10 text-slate-300 font-medium">
             {products.length}
           </span>
@@ -132,30 +137,31 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
           type="button"
           onClick={() => onTabChange("REPORTS")}
           className={cn(
-            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
+            "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
             activeTab === "REPORTS"
               ? "bg-[#1E293B] text-white shadow-sm border border-white/10"
               : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Reports & Excel</span>
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="hidden md:inline">Reports & Excel</span>
+          <span className="md:hidden">Reports</span>
         </button>
       </nav>
 
       {/* Cashier, Settings & Live Digital Clock */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Cashier Badge */}
         <div
           onClick={onOpenSettings}
-          className="cursor-pointer hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111726] border border-white/10 hover:border-white/20 text-xs shadow-sm transition-all"
+          className="cursor-pointer hidden md:flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#111726] border border-white/10 hover:border-white/20 text-xs shadow-sm transition-all"
           title="Klik untuk ganti nama kasir di Settings"
         >
-          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm" />
-          <User className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-white font-medium">{activeCashier}</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400 text-[11px]">Shift #01</span>
+          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shrink-0" />
+          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="text-white font-medium truncate max-w-[90px] sm:max-w-none">{activeCashier}</span>
+          <span className="text-slate-600 hidden sm:inline">|</span>
+          <span className="text-slate-400 text-[11px] hidden sm:inline">Shift #01</span>
         </div>
 
         {/* Settings Button */}
@@ -163,17 +169,17 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
           <button
             type="button"
             onClick={onOpenSettings}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white text-xs font-medium transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white text-xs font-medium transition-all shadow-sm"
             title="Pengaturan Kasir, Logo Toko & Reset Order"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-400" />
+            <Settings className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="hidden sm:inline">Settings</span>
           </button>
         )}
 
         {/* Digital Clock */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111726] border border-white/10 text-slate-300 font-mono text-xs shadow-sm">
-          <Clock className="w-3.5 h-3.5 text-slate-400" />
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#111726] border border-white/10 text-slate-300 font-mono text-xs shadow-sm">
+          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="tracking-wider font-semibold">{currentTime || "--:--:--"}</span>
         </div>
       </div>

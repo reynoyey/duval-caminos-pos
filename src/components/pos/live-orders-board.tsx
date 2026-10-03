@@ -300,13 +300,13 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
         // --------------------------------------------------------------------
         // VIEW 1: BARISTA PREPARATION MODE (Kitchen Display System)
         // --------------------------------------------------------------------
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0 pt-3 overflow-hidden">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 min-h-0 pt-3 overflow-hidden">
           {/* ================================================================ */}
-          {/* COLUMN 1: ON PROCESS / BREWING (Yellow/Amber Accent)             */}
+          {/* COLUMN 1: ON PROCESS / BREWING (Amber Accent)                    */}
           {/* ================================================================ */}
-          <div className="flex flex-col h-full rounded-2xl border border-amber-500/40 bg-stone-950/60 overflow-hidden shadow-xl shadow-amber-950/10">
+          <div className="flex flex-col h-full rounded-2xl border border-white/10 bg-[#0E131F] overflow-hidden shadow-sm">
             {/* Column Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-950/50 via-stone-900 to-stone-950 border-b border-amber-500/30">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#161F30] border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/40">
                   <Flame className="w-4 h-4 animate-pulse" />
@@ -503,9 +503,9 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
           {/* ================================================================ */}
           {/* COLUMN 2: COMPLETED / READY FOR PICKUP (Emerald Green Accent)    */}
           {/* ================================================================ */}
-          <div className="flex flex-col h-full rounded-2xl border border-emerald-500/40 bg-stone-950/60 overflow-hidden shadow-xl shadow-emerald-950/10">
+          <div className="flex flex-col h-full rounded-2xl border border-white/10 bg-[#0E131F] overflow-hidden shadow-sm">
             {/* Column Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-950/50 via-stone-900 to-stone-950 border-b border-emerald-500/30">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#161F30] border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
                   <CheckCircle2 className="w-4 h-4" />

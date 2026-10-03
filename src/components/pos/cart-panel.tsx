@@ -27,12 +27,12 @@ export function CartPanel({ onEditLine, onOpenDiscount, onCheckout, className }:
     <aside
       aria-label="Order Cart"
       className={cn(
-        "sticky top-0 flex h-full w-full lg:w-[35%] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111726] shadow-sm select-none",
+        "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111726] shadow-sm select-none",
         className
       )}
     >
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3 bg-[#0D121D]">
+      <header className="flex items-center gap-2.5 sm:gap-3 border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3 bg-[#0D121D] shrink-0">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-sm">
           <ShoppingCart className="w-4 h-4" />
         </div>
@@ -176,7 +176,7 @@ export function CartPanel({ onEditLine, onOpenDiscount, onCheckout, className }:
       </div>
 
       {/* Bill Breakdown & Pay Action */}
-      <footer className="border-t border-white/10 bg-[#0D121D] p-4 space-y-3">
+      <footer className="border-t border-white/10 bg-[#0D121D] p-3 sm:p-4 space-y-2.5 sm:space-y-3 shrink-0">
         {/* Subtotal & Discount row */}
         <div className="space-y-1.5 text-xs">
           <div className="flex justify-between text-slate-400">
