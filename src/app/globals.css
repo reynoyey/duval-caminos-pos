@@ -1,0 +1,212 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Duval Caminos Coffee — MIAMI VIBES THEME
+   Electric Flamingo Pink (#FF2A85), Miami Ocean Cyan (#00F5D4),
+   Sunset Coral Orange (#FF8C42), and Midnight Cyberpunk Indigo (#0A0818).
+   ========================================================================== */
+:root {
+  --radius: 1rem;
+
+  --background: oklch(0.12 0.03 285);         /* Deep Midnight Indigo */
+  --foreground: oklch(0.98 0.01 280);         /* Pure Crisp White/Cyan */
+  --card: oklch(0.16 0.04 290 / 0.85);        /* Synthwave Dark Glass */
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.15 0.04 290);
+  --popover-foreground: var(--foreground);
+
+  /* Miami Neon Primary: Electric Flamingo Pink */
+  --primary: #FF2A85;
+  --primary-foreground: #FFFFFF;
+
+  /* Miami Neon Secondary: Electric Cyan / Turquoise */
+  --secondary: #00F5D4;
+  --secondary-foreground: #0A0818;
+
+  --muted: oklch(0.22 0.03 285);
+  --muted-foreground: oklch(0.72 0.03 270);
+  --accent: #FF8C42;                         /* Sunset Coral */
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF3366;
+  --success: #00F5D4;
+  --border: rgba(255, 42, 133, 0.22);
+  --input: oklch(0.2 0.03 285);
+  --ring: #FF2A85;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-outfit), var(--font-inter), sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body {
+    @apply h-full overflow-hidden bg-[#0A0818] text-foreground antialiased;
+    font-feature-settings: "tnum" 1, "cv11" 1;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    background-image: 
+      radial-gradient(at 10% 10%, rgba(255, 42, 133, 0.15) 0px, transparent 50%),
+      radial-gradient(at 90% 20%, rgba(0, 245, 212, 0.12) 0px, transparent 50%),
+      radial-gradient(at 50% 90%, rgba(138, 43, 226, 0.15) 0px, transparent 60%);
+    background-attachment: fixed;
+  }
+  input,
+  textarea {
+    user-select: text;
+  }
+  button {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .glass-miami {
+    background: rgba(18, 14, 38, 0.78);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 42, 133, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .text-gradient-miami {
+    background: linear-gradient(135deg, #FF2A85 0%, #FF8C42 50%, #00F5D4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-sunset {
+    background: linear-gradient(135deg, #FF2A85 0%, #FF9E00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #00F5D4 0%, #00B4D8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glow-pink {
+    box-shadow: 0 0 20px -3px rgba(255, 42, 133, 0.45);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px -3px rgba(0, 245, 212, 0.45);
+  }
+
+  .glow-sunset {
+    box-shadow: 0 0 20px -3px rgba(255, 140, 66, 0.45);
+  }
+
+  .btn-miami {
+    background: linear-gradient(135deg, #FF2A85 0%, #FF6B00 100%);
+    color: #FFFFFF;
+    font-weight: 800;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px -2px rgba(255, 42, 133, 0.5);
+  }
+  .btn-miami:hover {
+    background: linear-gradient(135deg, #FF459B 0%, #FF8533 100%);
+    box-shadow: 0 6px 25px 0px rgba(255, 42, 133, 0.7);
+    transform: translateY(-1px);
+  }
+  .btn-miami:active {
+    transform: translateY(0px) scale(0.99);
+  }
+
+  .btn-cyan {
+    background: linear-gradient(135deg, #00F5D4 0%, #00B4D8 100%);
+    color: #0A0818;
+    font-weight: 800;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px -2px rgba(0, 245, 212, 0.4);
+  }
+  .btn-cyan:hover {
+    background: linear-gradient(135deg, #33FFDF 0%, #33C5E0 100%);
+    box-shadow: 0 6px 25px 0px rgba(0, 245, 212, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 42, 133, 0.4) transparent;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Thermal Receipt Printing Styles (58mm & 80mm Paper Rolls)
+   Hides all screen UI; prints only #thermal-receipt with crisp thermal layout
+   ========================================================================== */
+@media print {
+  @page {
+    margin: 0mm;
+    size: auto;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #thermal-receipt {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+  }
+  #thermal-receipt * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+}

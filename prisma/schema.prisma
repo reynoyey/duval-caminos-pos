@@ -1,0 +1,251 @@
+// ============================================================================
+//  Duval Caminos Coffee — POS Database Schema (PostgreSQL / Supabase)
+//  All monetary values are stored as INTEGER Rupiah (no decimals) to avoid
+//  floating-point rounding issues.
+// ============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase: pooled URL in DATABASE_URL, direct URL for migrations.
+  directUrl = env("DIRECT_URL")
+}
+
+// ----------------------------------------------------------------------------
+//  ENUMS
+// ----------------------------------------------------------------------------
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+}
+
+enum OrderStatus {
+  PROCESSING // In kitchen / barista preparation queue
+  COMPLETED  // Handed over / ready for customer pickup
+  PAID       // Settled / legacy state
+  CANCELLED  // Voided / cancelled order
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+  DEBIT_EDC
+}
+
+enum QrisMode {
+  DYNAMIC
+  STATIC
+}
+
+enum DiscountType {
+  NONE
+  PERCENT
+  AMOUNT
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum SelectionType {
+  SINGLE // radio — exactly one (or zero if optional)
+  MULTIPLE // checkbox — zero..maxSelect
+}
+
+// ----------------------------------------------------------------------------
+//  CATALOG
+// ----------------------------------------------------------------------------
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  icon      String? // lucide icon name, e.g. "Coffee"
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  sku         String  @unique
+  name        String
+  description String?
+  basePrice   Int // Rupiah
+  isBeverage  Boolean @default(true) // counted as "cup" in reports
+  isAvailable Boolean @default(true) // sold-out toggle
+  sortOrder   Int     @default(0)
+  tag         String? // "Best Seller", "New", ...
+
+  categoryId     String
+  category       Category               @relation(fields: [categoryId], references: [id])
+  modifierGroups ProductModifierGroup[]
+  orderItems     OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+/// A reusable group of choices: Suhu, Ukuran, Sweetness, Susu, Add-ons.
+model ModifierGroup {
+  id            String        @id @default(cuid())
+  code          String        @unique // TEMPERATURE | SIZE | SWEETNESS | MILK | ADDON
+  name          String // label shown to cashier
+  selectionType SelectionType @default(SINGLE)
+  isRequired    Boolean       @default(false)
+  minSelect     Int           @default(0)
+  maxSelect     Int           @default(1)
+  sortOrder     Int           @default(0)
+
+  options  ModifierOption[]
+  products ProductModifierGroup[]
+}
+
+model ModifierOption {
+  id         String  @id @default(cuid())
+  code       String  @unique // e.g. MILK_OAT, ADDON_EXTRA_SHOT
+  name       String
+  priceDelta Int     @default(0) // Rupiah added to unit price
+  isDefault  Boolean @default(false)
+  isActive   Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  groupId String
+  group   ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  orderItemModifiers OrderItemModifier[]
+
+  @@index([groupId])
+}
+
+/// Many-to-many: which modifier groups are offered for which product.
+model ProductModifierGroup {
+  productId String
+  groupId   String
+  sortOrder Int    @default(0)
+
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  group   ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([productId, groupId])
+}
+
+// ----------------------------------------------------------------------------
+//  OPERATIONS
+// ----------------------------------------------------------------------------
+
+model Shift {
+  id                 String      @id @default(cuid())
+  cashierName        String
+  status             ShiftStatus @default(OPEN)
+  openedAt           DateTime    @default(now())
+  closedAt           DateTime?
+  openingCash        Int         @default(0) // modal awal laci
+  expectedCash       Int? // opening + cash sales (computed on close)
+  closingCashCounted Int? // hasil hitung fisik kasir
+  notes              String?
+
+  orders Order[]
+
+  @@index([status])
+  @@index([openedAt])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique // DCC-261003-0001
+  queueNumber  Int // daily running number for barista call-out
+  orderType    OrderType
+  customerName String
+  tableNumber  String? // no. meja / pager
+  status       OrderStatus @default(PAID)
+
+  subtotal       Int
+  discountType   DiscountType @default(NONE)
+  discountValue  Int          @default(0) // % or Rupiah, depending on type
+  discountCode   String?
+  discountAmount Int          @default(0)
+  taxRate        Int          @default(10) // PB1 percent
+  taxAmount      Int          @default(0)
+  total          Int
+
+  shiftId String
+  shift   Shift  @relation(fields: [shiftId], references: [id])
+
+  items    OrderItem[]
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shiftId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  // Snapshots — menu prices may change later, receipts must not.
+  productName  String
+  categoryName String
+  isBeverage   Boolean @default(true)
+  basePrice    Int
+  unitPrice    Int // basePrice + Σ modifier priceDelta
+  quantity     Int
+  lineTotal    Int
+  note         String? // catatan barista
+
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  modifiers OrderItemModifier[]
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderItemModifier {
+  id         String @id @default(cuid())
+  groupCode  String // snapshot
+  groupName  String
+  optionCode String
+  optionName String
+  priceDelta Int
+
+  orderItemId      String
+  orderItem        OrderItem       @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  modifierOptionId String?
+  modifierOption   ModifierOption? @relation(fields: [modifierOptionId], references: [id], onDelete: SetNull)
+
+  @@index([orderItemId])
+  @@index([optionCode])
+}
+
+model Payment {
+  id         String        @id @default(cuid())
+  method     PaymentMethod
+  amount     Int // amount applied to the order (= order total)
+  tendered   Int // uang diterima (cash) — equals amount for non-cash
+  change     Int           @default(0) // kembalian
+  qrisMode   QrisMode?
+  reference  String? // approval code EDC / RRN QRIS
+  paidAt     DateTime      @default(now())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([method])
+}
