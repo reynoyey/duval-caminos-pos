@@ -405,7 +405,8 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                                 </span>
                               ) : (
                                 <span className="text-stone-300 font-semibold flex items-center gap-1">
-                                  <ShoppingBag className="w-3 h-3" /> Takeaway
+                                  <ShoppingBag className="w-3 h-3" /> Takeaway{" "}
+                                  {order.tableNumber && `(${order.tableNumber})`}
                                 </span>
                               )}
                             </span>

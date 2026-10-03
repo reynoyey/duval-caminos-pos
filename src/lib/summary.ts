@@ -15,6 +15,8 @@ export interface ShiftSummary {
   averageTicket: number;
   dineInCount: number;
   takeawayCount: number;
+  dineInSales: number;
+  takeawaySales: number;
   voidCount: number;
 }
 
@@ -85,6 +87,8 @@ export function summarize(orders: any[], openingCash = 0): ShiftSummary {
     averageTicket: settled.length ? Math.round(totalSales / settled.length) : 0,
     dineInCount: settled.filter((o) => o.orderType === "DINE_IN").length,
     takeawayCount: settled.filter((o) => o.orderType === "TAKEAWAY").length,
+    dineInSales: sum((o) => (o.orderType === "DINE_IN" ? o.total : 0)),
+    takeawaySales: sum((o) => (o.orderType === "TAKEAWAY" ? o.total : 0)),
     voidCount: orders.length - settled.length,
   };
 }

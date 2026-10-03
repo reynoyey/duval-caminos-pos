@@ -16,17 +16,19 @@ import {
   selectionsToModifiers,
 } from "@/stores/modifier-store";
 
-const OPTION_ICON: Record<string, typeof Flame> = { TEMP_HOT: Flame, TEMP_ICED: Snowflake };
-const QUICK_NOTES = ["Less ice", "Extra hot", "No ice", "Thick foam", "Light sweet", "Separate lid"];
+const OPTION_ICON: Record<string, typeof Snowflake> = {
+  ICE_REGULAR: Snowflake,
+  ICE_LESS: Snowflake,
+  TEMP_ICED: Snowflake,
+};
+const QUICK_NOTES = ["Less ice", "Extra ice", "No ice", "Normal sweet", "Less sweet", "Separate cup"];
 
 /** Keyboard shortcuts while the modal is open */
 const HOTKEYS: Record<string, [string, string]> = {
-  h: ["TEMPERATURE", "TEMP_HOT"],
-  i: ["TEMPERATURE", "TEMP_ICED"],
   r: ["SIZE", "SIZE_REGULAR"],
-  l: ["SIZE", "SIZE_LARGE"],
-  o: ["MILK", "MILK_OAT"],
-  a: ["MILK", "MILK_ALMOND"],
+  i: ["TEMPERATURE", "ICE_REGULAR"],
+  l: ["TEMPERATURE", "ICE_LESS"],
+  m: ["MILK", "MILK_FRESH"],
 };
 
 export function ModifierDialog() {

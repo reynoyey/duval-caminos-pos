@@ -1,7 +1,7 @@
 "use client";
 
 import type { Ref } from "react";
-import { ShoppingBag, UtensilsCrossed, User, Hash, Sparkles } from "lucide-react";
+import { ShoppingBag, UtensilsCrossed, User, Hash, Phone, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import type { OrderType } from "@/lib/types";
@@ -80,20 +80,24 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
         </span>
       </label>
 
-      {/* Table / Pager ID */}
-      <label className="flex w-24 sm:w-28 lg:w-36 shrink-0 items-center gap-1.5 sm:gap-2 rounded-xl border border-white/10 bg-[#0D121D] px-2.5 sm:px-3 transition-all focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20">
-        <Hash className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+      {/* Table # / Phone Number */}
+      <label className="flex w-32 sm:w-36 lg:w-44 shrink-0 items-center gap-1.5 sm:gap-2 rounded-xl border border-white/10 bg-[#0D121D] px-2.5 sm:px-3 transition-all focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20">
+        {orderType === "DINE_IN" ? (
+          <Hash className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+        ) : (
+          <Phone className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+        )}
         <span className="flex flex-1 flex-col justify-center py-1 min-w-0">
           <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase truncate">
-            {orderType === "DINE_IN" ? "Table #" : "Pager"}
+            {orderType === "DINE_IN" ? "Table #" : "Phone Number"}
           </span>
           <input
             id="table-number"
             value={tableNumber}
-            maxLength={10}
+            maxLength={20}
             autoComplete="off"
             onChange={(e) => setTableNumber(e.target.value)}
-            placeholder="No."
+            placeholder={orderType === "DINE_IN" ? "No." : "Optional"}
             className="w-full bg-transparent text-sm font-semibold text-white outline-none placeholder:text-xs placeholder:font-normal placeholder:text-slate-500"
           />
         </span>

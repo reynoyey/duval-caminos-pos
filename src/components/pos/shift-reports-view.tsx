@@ -291,22 +291,26 @@ export function ShiftReportsView() {
           </div>
         </div>
 
-        {/* Tax & Reconciliation Discrepancy Box */}
+        {/* Order Types & Drawer Cash Reconciliation Box */}
         <div className="rounded-xl border border-white/10 bg-[#0E131F] p-5 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-2">
-            <Percent className="w-4 h-4 text-amber-400" />
-            <span>Tax & Drawer Cash Reconciliation</span>
+            <Percent className="w-4 h-4 text-cyan-400" />
+            <span>Order Type & Drawer Reconciliation</span>
           </h3>
 
           <div className="space-y-2.5 text-xs">
             <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
-              <span className="text-slate-300">Gross Sales (Item Subtotals)</span>
-              <span className="font-mono font-bold text-white">{formatRupiah(summary.grossSales)}</span>
+              <span className="text-slate-300">Total Penjualan Dine-In</span>
+              <span className="font-mono font-bold text-white">
+                {formatRupiah(summary.dineInSales ?? (summary.totalSales - (summary.takeawaySales || 0)))}
+              </span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-[#161F30]">
-              <span className="text-slate-300">Restaurant Tax (PB1 10%) Collected</span>
-              <span className="font-mono font-bold text-amber-400">{formatRupiah(summary.totalTax)}</span>
+              <span className="text-slate-300">Total Penjualan Takeaway</span>
+              <span className="font-mono font-bold text-white">
+                {formatRupiah(summary.takeawaySales ?? 0)}
+              </span>
             </div>
 
             <div

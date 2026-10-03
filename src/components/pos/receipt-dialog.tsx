@@ -251,8 +251,8 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
                   </div>
                   {order.tableNumber && (
                     <div className="flex justify-between">
-                      <span>Table / Pager:</span>
-                      <span className="font-bold">#{order.tableNumber}</span>
+                      <span>{order.orderType === "DINE_IN" ? "Table #:" : "Phone:"}</span>
+                      <span className="font-bold">{order.orderType === "DINE_IN" ? `#${order.tableNumber}` : order.tableNumber}</span>
                     </div>
                   )}
                 </div>
@@ -356,7 +356,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
                   </p>
                   <p className="text-[10px] font-bold text-stone-600 mt-1">
                     {order.orderType === "DINE_IN" ? "DINE-IN" : "TAKEAWAY (CUP)"}
-                    {order.tableNumber && ` · TABLE ${order.tableNumber}`}
+                    {order.tableNumber && ` · ${order.orderType === "DINE_IN" ? `TABLE #${order.tableNumber}` : `TEL: ${order.tableNumber}`}`}
                   </p>
                 </div>
 

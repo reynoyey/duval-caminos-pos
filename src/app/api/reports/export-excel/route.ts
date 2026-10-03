@@ -200,12 +200,15 @@ function createWorkbook(
     }
   };
 
-  addMetric(r++, "Gross Sales (Item Subtotals)", summary.grossSales, RUPIAH, "Opening Float Cash (Drawer)", summary.openingCash, RUPIAH);
-  addMetric(r++, "Promotional Discounts / Vouchers", summary.totalDiscount, RUPIAH, "Cash Sales Tendered", summary.cashSales, RUPIAH);
-  addMetric(r++, "Net Revenue (Taxable Subtotal)", summary.netSales, RUPIAH, "Expected Cash in Drawer", summary.cashOnHand, RUPIAH, true);
-  addMetric(r++, "Restaurant Tax PB1 (10%)", summary.totalTax, RUPIAH, "QRIS Payments Total", summary.qrisSales, RUPIAH);
-  addMetric(r++, "Grand Total Revenue (Collected)", summary.totalSales, RUPIAH, "Debit / EDC Card Total", summary.debitSales, RUPIAH, true);
-  addMetric(r++, "Cash Reconciliation Discrepancy", 0, RUPIAH, "Drawer Status", "BALANCED (Rp0 Variance)", "@", true);
+  const dineInSales = summary.dineInSales ?? (summary.totalSales - (summary.takeawaySales || 0));
+  const takeawaySales = summary.takeawaySales ?? 0;
+
+  addMetric(r++, "Grand Total Sales (Semua Pesanan)", summary.totalSales, RUPIAH, "Opening Float Cash (Drawer)", summary.openingCash, RUPIAH, true);
+  addMetric(r++, "Total Penjualan Dine-In", dineInSales, RUPIAH, "Total Pembayaran QRIS", summary.qrisSales, RUPIAH);
+  addMetric(r++, "Total Penjualan Takeaway", takeawaySales, RUPIAH, "Total Pembayaran Cash", summary.cashSales, RUPIAH);
+  addMetric(r++, "Total Diskon Promo / Voucher", summary.totalDiscount, RUPIAH, "Debit / EDC Card Total", summary.debitSales, RUPIAH);
+  addMetric(r++, "Total Items Terjual", summary.totalItems, INT, "Expected Cash in Drawer", summary.cashOnHand, RUPIAH, true);
+  addMetric(r++, "Rata-rata Transaksi (AOV)", summary.averageTicket, RUPIAH, "Drawer Status", "BALANCED (Rp0 Variance)", "@", true);
 
   r += 2;
   r = sectionTitle(s1, r, 5, "2. Operational & Service KPIs");
@@ -226,20 +229,19 @@ function createWorkbook(
     { key: "queueNumber", header: "Ticket #", width: 10 },
     { key: "time", header: "Timestamp", width: 20 },
     { key: "customerName", header: "Customer Name", width: 22 },
-    { key: "tableNumber", header: "Table / Pager", width: 14 },
+    { key: "tableNumber", header: "Table / Phone", width: 16 },
     { key: "orderType", header: "Type", width: 12 },
     { key: "status", header: "Status", width: 22 },
     { key: "itemsSummary", header: "Ordered Items & Modifiers Summary", width: 45 },
     { key: "cups", header: "Cups", width: 8 },
     { key: "subtotal", header: "Subtotal", width: 16 },
     { key: "discount", header: "Discount", width: 14 },
-    { key: "tax", header: "PB1 Tax", width: 14 },
     { key: "total", header: "Grand Total", width: 16 },
     { key: "paymentMethod", header: "Payment Method", width: 16 },
     { key: "reference", header: "Ref / Approval Code", width: 20 },
   ];
 
-  addBanner(s2, 16, "Detailed Transaction Journal", `Total Orders Logged: ${orders.length}  |  Exported: ${metaInfo.exportDate}`);
+  addBanner(s2, 15, "Detailed Transaction Journal", `Total Orders Logged: ${orders.length}  |  Exported: ${metaInfo.exportDate}`);
   styleHeader(s2.getRow(5));
 
   let orderRowIdx = 6;
@@ -272,8 +274,6 @@ function createWorkbook(
     row.getCell("subtotal").numFmt = RUPIAH;
     row.getCell("discount").value = o.discountAmount;
     row.getCell("discount").numFmt = RUPIAH;
-    row.getCell("tax").value = o.taxAmount;
-    row.getCell("tax").numFmt = RUPIAH;
     row.getCell("total").value = o.total;
     row.getCell("total").numFmt = RUPIAH;
     row.getCell("paymentMethod").value = pay ? PAYMENT_LABEL[pay.method] || pay.method : "—";
@@ -291,7 +291,6 @@ function createWorkbook(
     row.getCell("cups").alignment = { horizontal: "right", vertical: "middle" };
     row.getCell("subtotal").alignment = { horizontal: "right", vertical: "middle" };
     row.getCell("discount").alignment = { horizontal: "right", vertical: "middle" };
-    row.getCell("tax").alignment = { horizontal: "right", vertical: "middle" };
     row.getCell("total").alignment = { horizontal: "right", vertical: "middle" };
   });
 
@@ -464,7 +463,7 @@ export async function POST(req: Request) {
 
     const computedSummary =
       summary ||
-      (await import("@/lib/reports")).summarize(orders, 300000);
+      (await import("@/lib/reports")).summarize(orders, 0);
 
     const wb = createWorkbook("Active Register Session", orders, computedSummary, {
       cashierName,

@@ -49,7 +49,9 @@ export function CartPanel({ onEditLine, onOpenDiscount, onCheckout, className }:
             ) : (
               <span className="italic text-slate-500">Nama pelanggan belum diisi</span>
             )}
-            {tableNumber && <span className="text-slate-400 font-medium"> · #{tableNumber}</span>}
+            {tableNumber && (
+              <span className="text-slate-400 font-medium"> · {orderType === "DINE_IN" ? `#${tableNumber}` : tableNumber}</span>
+            )}
           </p>
         </div>
 

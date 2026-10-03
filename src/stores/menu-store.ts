@@ -116,17 +116,19 @@ export const useMenuStore = create<MenuState>()(
       },
 
       hydrateCatalog: (catalog) => {
-        // If state already has custom products, preserve them or merge
         if (catalog && catalog.products && catalog.products.length > 0) {
+          const sanitizedProducts = catalog.products.map((p) =>
+            p.isBeverage ? { ...p, modifierGroups: DEFAULT_MODIFIER_GROUPS } : p
+          );
           set({
             categories: catalog.categories,
-            products: catalog.products,
+            products: sanitizedProducts,
           });
         }
       },
     }),
     {
-      name: "duval-pos-menu-v2",
+      name: "duval-pos-menu-v3",
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         categories: s.categories,

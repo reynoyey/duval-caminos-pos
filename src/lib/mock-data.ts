@@ -4,14 +4,14 @@ export const DEFAULT_MODIFIER_GROUPS: ModifierGroupDTO[] = [
   {
     id: "mg-temp",
     code: "TEMPERATURE",
-    name: "Temperature",
+    name: "Ice Level",
     selectionType: "SINGLE",
     isRequired: true,
     minSelect: 1,
     maxSelect: 1,
     options: [
-      { id: "opt-hot", code: "TEMP_HOT", name: "Hot", priceDelta: 0, isDefault: false },
-      { id: "opt-iced", code: "TEMP_ICED", name: "Iced", priceDelta: 0, isDefault: true },
+      { id: "opt-reg-ice", code: "ICE_REGULAR", name: "Regular Ice", priceDelta: 0, isDefault: true },
+      { id: "opt-less-ice", code: "ICE_LESS", name: "Less Ice", priceDelta: 0, isDefault: false },
     ],
   },
   {
@@ -24,7 +24,6 @@ export const DEFAULT_MODIFIER_GROUPS: ModifierGroupDTO[] = [
     maxSelect: 1,
     options: [
       { id: "opt-regular", code: "SIZE_REGULAR", name: "Regular (12oz)", priceDelta: 0, isDefault: true },
-      { id: "opt-large", code: "SIZE_LARGE", name: "Large (16oz)", priceDelta: 6000, isDefault: false },
     ],
   },
   {
@@ -51,28 +50,13 @@ export const DEFAULT_MODIFIER_GROUPS: ModifierGroupDTO[] = [
     maxSelect: 1,
     options: [
       { id: "opt-milk-fresh", code: "MILK_FRESH", name: "Fresh Dairy Milk", priceDelta: 0, isDefault: true },
-      { id: "opt-milk-oat", code: "MILK_OAT", name: "Oat Milk", priceDelta: 10000, isDefault: false },
-      { id: "opt-milk-almond", code: "MILK_ALMOND", name: "Almond Milk", priceDelta: 12000, isDefault: false },
-    ],
-  },
-  {
-    id: "mg-addon",
-    code: "ADDON",
-    name: "Add-ons & Extras",
-    selectionType: "MULTIPLE",
-    isRequired: false,
-    minSelect: 0,
-    maxSelect: 2,
-    options: [
-      { id: "opt-shot", code: "ADDON_EXTRA_SHOT", name: "Extra Espresso Shot", priceDelta: 5000, isDefault: false },
-      { id: "opt-syrup", code: "ADDON_SYRUP", name: "Gourmet Vanilla Syrup", priceDelta: 5000, isDefault: false },
     ],
   },
 ];
 
 const ALL_COFFEE_MODIFIERS = DEFAULT_MODIFIER_GROUPS;
 const BLACK_COFFEE_MODIFIERS = DEFAULT_MODIFIER_GROUPS.filter(
-  (g) => g.code === "TEMPERATURE" || g.code === "SIZE" || g.code === "SWEETNESS" || g.code === "ADDON"
+  (g) => g.code === "TEMPERATURE" || g.code === "SIZE" || g.code === "SWEETNESS"
 );
 const FILTER_MODIFIERS = DEFAULT_MODIFIER_GROUPS.filter(
   (g) => g.code === "TEMPERATURE" || g.code === "SIZE"
