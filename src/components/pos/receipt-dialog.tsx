@@ -138,14 +138,14 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-[#100C29] border border-pink-500/30 text-white p-0 overflow-hidden shadow-2xl shadow-pink-950/50">
+      <DialogContent className="sm:max-w-lg bg-[#111726] border border-white/10 text-white p-0 overflow-hidden shadow-2xl shadow-black/80">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-600/25 via-rose-900/20 to-[#100C29] px-5 pt-4 pb-3 border-b border-pink-500/20 flex flex-wrap items-center justify-between gap-2">
+        <div className="bg-[#161F30] px-5 pt-4 pb-3 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <ReceiptText className="w-5 h-5 text-pink-400" />
+            <ReceiptText className="w-5 h-5 text-rose-400" />
             <div>
-              <DialogTitle className="text-base font-black text-white">Thermal Ticket Preview</DialogTitle>
-              <DialogDescription className="text-[11px] text-pink-200/70">
+              <DialogTitle className="text-base font-bold text-white">Thermal Ticket Preview</DialogTitle>
+              <DialogDescription className="text-[11px] text-slate-400">
                 Order #{order.orderNumber} · Ticket #{order.queueNumber}
               </DialogDescription>
             </div>
@@ -153,13 +153,13 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
 
           <div className="flex items-center gap-2">
             {/* Paper Roll Width Toggle */}
-            <div className="flex rounded-xl border border-pink-500/25 bg-[#0B081E] p-0.5 text-[10px] font-mono">
+            <div className="flex rounded-xl border border-white/10 bg-[#0E131F] p-0.5 text-[10px] font-mono">
               <button
                 type="button"
                 onClick={() => setPaperWidth("58mm")}
                 className={cn(
                   "rounded-lg px-2.5 py-1 font-bold transition",
-                  paperWidth === "58mm" ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm" : "text-stone-400 hover:text-white"
+                  paperWidth === "58mm" ? "bg-[#1E293B] text-white border border-white/10 shadow-sm" : "text-slate-400 hover:text-white"
                 )}
               >
                 58mm
@@ -169,7 +169,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
                 onClick={() => setPaperWidth("80mm")}
                 className={cn(
                   "rounded-lg px-2.5 py-1 font-bold transition",
-                  paperWidth === "80mm" ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm" : "text-stone-400 hover:text-white"
+                  paperWidth === "80mm" ? "bg-[#1E293B] text-white border border-white/10 shadow-sm" : "text-slate-400 hover:text-white"
                 )}
               >
                 80mm
@@ -177,13 +177,13 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
             </div>
 
             {/* Mode Switcher */}
-            <div className="flex rounded-xl border border-pink-500/25 bg-[#0B081E] p-0.5">
+            <div className="flex rounded-xl border border-white/10 bg-[#0E131F] p-0.5">
               <button
                 type="button"
                 onClick={() => setActiveTab("CUSTOMER")}
                 className={cn(
                   "rounded-lg px-3 py-1 text-[11px] font-bold transition",
-                  activeTab === "CUSTOMER" ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm" : "text-stone-400 hover:text-white"
+                  activeTab === "CUSTOMER" ? "bg-[#1E293B] text-white border border-white/10 shadow-sm" : "text-slate-400 hover:text-white"
                 )}
               >
                 Customer
@@ -193,7 +193,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
                 onClick={() => setActiveTab("BARISTA")}
                 className={cn(
                   "rounded-lg px-3 py-1 text-[11px] font-bold transition",
-                  activeTab === "BARISTA" ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm" : "text-stone-400 hover:text-white"
+                  activeTab === "BARISTA" ? "bg-[#1E293B] text-white border border-white/10 shadow-sm" : "text-slate-400 hover:text-white"
                 )}
               >
                 Barista Cup
@@ -203,7 +203,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
         </div>
 
         {/* Printable Ticket Simulation Container */}
-        <div className="p-4 bg-[#0B081E] flex justify-center max-h-[70vh] overflow-y-auto no-scrollbar">
+        <div className="p-4 bg-[#0E131F] flex justify-center max-h-[70vh] overflow-y-auto no-scrollbar">
           <div
             ref={printAreaRef}
             id="thermal-receipt"
@@ -393,12 +393,12 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between border-t border-pink-500/20 bg-[#0B081E] px-5 py-3.5">
+        <div className="flex items-center justify-between border-t border-white/10 bg-[#111726] px-5 py-3.5">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-pink-500/30 text-stone-300 hover:bg-pink-500/10 hover:text-white text-xs"
+            className="border-white/10 bg-transparent text-slate-300 hover:bg-white/5 hover:text-white text-xs"
           >
             Close
           </Button>
@@ -406,9 +406,9 @@ export function ReceiptDialog({ order, open, onOpenChange }: Props) {
           <Button
             type="button"
             onClick={handlePrint}
-            className="bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white font-extrabold text-xs px-5 shadow-lg shadow-pink-600/40 transition-all hover:scale-[1.02]"
+            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-5 shadow-sm transition-all"
           >
-            <Printer className="w-4 h-4 mr-1.5 text-cyan-300" />
+            <Printer className="w-4 h-4 mr-1.5 text-white" />
             Print Ticket
           </Button>
         </div>

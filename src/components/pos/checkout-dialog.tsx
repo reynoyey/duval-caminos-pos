@@ -161,25 +161,25 @@ export function CheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#100C29] border border-pink-500/30 text-white p-0 overflow-hidden shadow-2xl shadow-pink-950/50">
+      <DialogContent className="sm:max-w-2xl bg-[#111726] border border-white/10 text-white p-0 overflow-hidden shadow-2xl shadow-black/80">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-600/25 via-rose-900/20 to-[#100C29] px-6 pt-5 pb-4 border-b border-pink-500/20">
+        <div className="bg-[#161F30] px-6 pt-5 pb-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-pink-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Payment & Order Dispatch
               </span>
-              <DialogTitle className="text-xl font-black text-white mt-0.5">
+              <DialogTitle className="text-xl font-bold text-white mt-0.5">
                 Checkout — {customerName ? `for ${customerName}` : "New Order"}
               </DialogTitle>
-              <DialogDescription className="text-xs text-pink-200/70">
-                {orderType === "DINE_IN" ? "🌴 Dine-In Table Service" : "⚡ Takeaway Order"} · {lines.length} items
+              <DialogDescription className="text-xs text-slate-400">
+                {orderType === "DINE_IN" ? "Dine-In Table Service" : "Takeaway Order"} · {lines.length} items
               </DialogDescription>
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] text-pink-200/60 uppercase font-mono block">Grand Total</span>
-              <span className="text-2xl font-black text-cyan-300 tabular-nums">
+              <span className="text-[10px] text-slate-400 uppercase font-mono block">Grand Total</span>
+              <span className="text-2xl font-black text-cyan-400 tabular-nums">
                 {formatRupiah(total)}
               </span>
             </div>
@@ -191,7 +191,7 @@ export function CheckoutDialog({
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: "CASH", label: "Cash / Tunai", icon: Banknote },
-              { id: "QRIS", label: "QRIS Dynamic", icon: QrCode },
+              { id: "QRIS", label: "QRIS", icon: QrCode },
               { id: "DEBIT_EDC", label: "Debit / Card", icon: CreditCard },
             ].map((pm) => {
               const active = method === pm.id;
@@ -201,13 +201,13 @@ export function CheckoutDialog({
                   type="button"
                   onClick={() => setMethod(pm.id as PaymentMethod)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all duration-150 select-none",
+                    "flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border text-xs font-semibold transition-all duration-150 select-none",
                     active
-                      ? "border-pink-400 bg-gradient-to-r from-pink-600/30 to-orange-500/30 text-white ring-1 ring-pink-400 shadow-lg shadow-pink-500/25"
-                      : "border-pink-500/20 bg-[#0B081E] text-stone-300 hover:border-cyan-400/40 hover:text-white"
+                      ? "border-rose-500/80 bg-rose-500/10 text-white ring-1 ring-rose-500/40"
+                      : "border-white/10 bg-[#0E131F] text-slate-400 hover:border-white/20 hover:text-white"
                   )}
                 >
-                  <pm.icon className={cn("w-5 h-5", active ? "text-cyan-300" : "text-stone-400")} />
+                  <pm.icon className={cn("w-5 h-5", active ? "text-rose-400" : "text-slate-400")} />
                   <span>{pm.label}</span>
                 </button>
               );
@@ -216,12 +216,12 @@ export function CheckoutDialog({
 
           {/* TAB 1: CASH */}
           {method === "CASH" && (
-            <div className="space-y-4 rounded-2xl border border-pink-500/20 bg-[#0B081E] p-4">
+            <div className="space-y-4 rounded-xl border border-white/10 bg-[#0E131F] p-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-pink-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                   Quick Cash Tender
                 </span>
-                <span className="text-[11px] text-cyan-300 font-bold">Total: {formatRupiah(total)}</span>
+                <span className="text-[11px] text-cyan-400 font-bold font-mono">Total: {formatRupiah(total)}</span>
               </div>
 
               {/* Quick cash pills */}
@@ -229,7 +229,7 @@ export function CheckoutDialog({
                 <button
                   type="button"
                   onClick={() => setTenderedStr(String(total))}
-                  className="rounded-xl border border-cyan-400/50 bg-cyan-400/20 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-400/30 transition-all shadow-sm"
+                  className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all"
                 >
                   Exact Cash
                 </button>
@@ -240,7 +240,7 @@ export function CheckoutDialog({
                       key={amt}
                       type="button"
                       onClick={() => setTenderedStr(String(amt))}
-                      className="rounded-xl border border-pink-500/20 bg-[#140F33] py-2 text-xs font-semibold text-stone-200 hover:border-pink-400 hover:text-white transition-all"
+                      className="rounded-xl border border-white/10 bg-[#161F30] py-2 text-xs font-medium text-slate-200 hover:border-white/20 hover:text-white transition-all"
                     >
                       {formatRupiah(amt)}
                     </button>
@@ -248,19 +248,19 @@ export function CheckoutDialog({
               </div>
 
               {/* Custom Cash Tendered input */}
-              <div className="space-y-1.5 pt-2 border-t border-pink-500/20">
+              <div className="space-y-1.5 pt-2 border-t border-white/10">
                 <div className="flex justify-between text-xs">
-                  <label htmlFor="tendered-input" className="font-bold text-pink-200">
+                  <label htmlFor="tendered-input" className="font-semibold text-slate-300">
                     Custom Cash Tendered (IDR)
                   </label>
-                  <span className="font-mono text-cyan-300 font-bold">{formatRupiah(tendered)}</span>
+                  <span className="font-mono text-cyan-400 font-bold">{formatRupiah(tendered)}</span>
                 </div>
                 <Input
                   id="tendered-input"
                   value={tenderedStr}
                   onChange={(e) => setTenderedStr(e.target.value)}
                   placeholder={`e.g. ${total}`}
-                  className="h-11 text-base font-mono font-bold bg-[#100C29] border border-pink-500/30 text-cyan-300 focus:border-cyan-400"
+                  className="h-11 text-base font-mono font-bold bg-[#161F30] border border-white/10 text-cyan-400 focus:border-cyan-400"
                 />
               </div>
 
@@ -269,15 +269,15 @@ export function CheckoutDialog({
                 className={cn(
                   "flex items-center justify-between rounded-xl p-3.5 border transition-all",
                   isShort
-                    ? "border-red-500/60 bg-red-950/30 text-red-300"
-                    : "border-cyan-500/50 bg-cyan-950/30 text-cyan-300"
+                    ? "border-red-500/40 bg-red-950/20 text-red-300"
+                    : "border-cyan-500/30 bg-cyan-950/20 text-cyan-300"
                 )}
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">
                     {isShort ? "Insufficient Cash" : "Change to Customer"}
                   </span>
-                  <span className="text-xl font-black tabular-nums">
+                  <span className="text-xl font-bold tabular-nums">
                     {isShort ? `Short by ${formatRupiah(total - tendered)}` : formatRupiah(change)}
                   </span>
                 </div>
@@ -294,21 +294,21 @@ export function CheckoutDialog({
 
           {/* TAB 2: QRIS (Using Printed QRIS Sheet at Counter) */}
           {method === "QRIS" && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-pink-500/20 bg-[#0B081E] p-6 space-y-5 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500/20 via-cyan-500/20 to-purple-500/20 border border-pink-500/40 text-cyan-300 shadow-lg shadow-pink-500/20">
-                <QrCode className="w-8 h-8 text-cyan-300" />
+            <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-[#0E131F] p-6 space-y-4 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                <QrCode className="w-7 h-7 text-cyan-400" />
               </div>
 
               <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">
                   Kertas Print QRIS Meja Kasir
                 </h4>
-                <p className="text-xs text-pink-200/70 mt-1 max-w-sm">
+                <p className="text-xs text-slate-400 mt-1 max-w-sm">
                   Silakan arahkan pelanggan untuk scan lembaran cetak QRIS fisik yang ada di meja kasir.
                 </p>
-                <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#150F33] border border-cyan-400/40">
-                  <span className="text-[11px] text-pink-200 uppercase font-bold">Total yang Harus Dibayar:</span>
-                  <span className="font-mono text-base font-black text-cyan-300">{formatRupiah(total)}</span>
+                <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#161F30] border border-white/10">
+                  <span className="text-[11px] text-slate-300 uppercase font-semibold">Total yang Harus Dibayar:</span>
+                  <span className="font-mono text-base font-bold text-cyan-400">{formatRupiah(total)}</span>
                 </div>
               </div>
 
@@ -319,26 +319,26 @@ export function CheckoutDialog({
                   onClick={() => {
                     toast.error("Pembayaran QRIS dibatalkan atau belum diterima");
                   }}
-                  className="flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl border border-red-500/40 bg-red-950/20 hover:bg-red-950/40 text-red-300 font-bold transition-all text-xs"
+                  className="flex flex-col items-center justify-center gap-1 py-2.5 px-4 rounded-xl border border-red-500/30 bg-red-950/20 hover:bg-red-950/40 text-red-300 font-semibold transition-all text-xs"
                 >
-                  <div className="flex items-center gap-1.5 text-red-400 font-black">
+                  <div className="flex items-center gap-1.5 text-red-400 font-bold">
                     <AlertTriangle className="w-4 h-4" />
                     <span>DECLINE / BATAL</span>
                   </div>
-                  <span className="text-[10px] text-stone-400 font-normal">Dana belum masuk</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Dana belum masuk</span>
                 </button>
 
                 <button
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleFinishPayment}
-                  className="flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl border border-cyan-400/50 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:brightness-110 text-white font-bold transition-all shadow-lg shadow-cyan-600/30 text-xs"
+                  className="flex flex-col items-center justify-center gap-1 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all text-xs"
                 >
-                  <div className="flex items-center gap-1.5 font-black text-white">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-200" />
+                  <div className="flex items-center gap-1.5 font-bold text-white">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
                     <span>ACC / BERHASIL</span>
                   </div>
-                  <span className="text-[10px] text-cyan-100 font-normal">Kirim order ke barista</span>
+                  <span className="text-[10px] text-emerald-100 font-normal">Kirim order ke barista</span>
                 </button>
               </div>
             </div>
@@ -346,14 +346,14 @@ export function CheckoutDialog({
 
           {/* TAB 3: DEBIT / EDC */}
           {method === "DEBIT_EDC" && (
-            <div className="space-y-3.5 rounded-2xl border border-pink-500/20 bg-[#0B081E] p-4">
-              <div className="text-xs text-pink-200">
-                <p className="font-bold uppercase tracking-wider mb-1">Supported Card Networks</p>
+            <div className="space-y-3.5 rounded-xl border border-white/10 bg-[#0E131F] p-4">
+              <div className="text-xs text-slate-300">
+                <p className="font-semibold uppercase tracking-wider mb-2">Supported Card Networks</p>
                 <div className="flex gap-2 flex-wrap">
                   {["BCA Card", "Mandiri Debit", "BRI", "BNI", "Visa / Mastercard"].map((card) => (
                     <span
                       key={card}
-                      className="px-2.5 py-1 rounded-lg bg-[#140F33] border border-pink-500/30 text-[10px] text-cyan-300 font-mono font-bold"
+                      className="px-2.5 py-1 rounded-lg bg-[#161F30] border border-white/10 text-[10px] text-cyan-400 font-mono font-medium"
                     >
                       {card}
                     </span>
@@ -361,8 +361,8 @@ export function CheckoutDialog({
                 </div>
               </div>
 
-              <div className="space-y-1.5 pt-2 border-t border-pink-500/20">
-                <label htmlFor="edc-ref" className="text-xs font-bold text-pink-200">
+              <div className="space-y-1.5 pt-2 border-t border-white/10">
+                <label htmlFor="edc-ref" className="text-xs font-semibold text-slate-300">
                   EDC Trace / Approval Reference Number
                 </label>
                 <Input
@@ -370,7 +370,7 @@ export function CheckoutDialog({
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                   placeholder="e.g. 482109 or RRN-98214"
-                  className="h-10 text-xs font-mono bg-[#100C29] border border-pink-500/30 text-white focus:border-cyan-400"
+                  className="h-10 text-xs font-mono bg-[#161F30] border border-white/10 text-white focus:border-cyan-400"
                 />
               </div>
             </div>
@@ -378,12 +378,12 @@ export function CheckoutDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-pink-500/20 bg-[#0B081E] px-6 py-4">
+        <div className="flex items-center justify-between border-t border-white/10 bg-[#111726] px-6 py-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-pink-500/30 text-stone-300 hover:bg-pink-500/10 hover:text-white text-xs"
+            className="border-white/10 bg-transparent text-slate-300 hover:bg-white/5 hover:text-white text-xs"
           >
             Cancel
           </Button>
@@ -392,10 +392,10 @@ export function CheckoutDialog({
             type="button"
             disabled={isSubmitting || isShort}
             onClick={handleFinishPayment}
-            className="bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white font-extrabold text-xs px-6 h-11 shadow-lg shadow-pink-600/40 transition-all hover:scale-[1.02]"
+            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-6 h-11 transition-all shadow-md shadow-rose-950/40"
           >
-            <span>Confirm Payment & Dispatch to Barista</span>
-            <ArrowRight className="w-4 h-4 ml-1.5 text-cyan-300" />
+            <span>Confirm Payment & Dispatch</span>
+            <ArrowRight className="w-4 h-4 ml-1.5 text-white/80" />
           </Button>
         </div>
       </DialogContent>

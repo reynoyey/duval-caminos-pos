@@ -20,9 +20,9 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
   const setTableNumber = useCartStore((s) => s.setTableNumber);
 
   return (
-    <section aria-label="Order Header" className="glass-miami flex items-stretch gap-3 rounded-2xl p-2.5 shadow-lg shadow-black/40">
-      {/* Order Type Segmented Control (Miami Vibes) */}
-      <div className="flex shrink-0 gap-1 rounded-xl bg-[#0D0A1F]/90 p-1 border border-pink-500/25">
+    <section aria-label="Order Header" className="flex items-stretch gap-2.5 rounded-2xl p-2 bg-[#101522] border border-white/10 shadow-sm">
+      {/* Order Type Segmented Control */}
+      <div className="flex shrink-0 gap-1 rounded-xl bg-[#0D121D] p-1 border border-white/10">
         {TYPES.map((t) => {
           const active = orderType === t.value;
           return (
@@ -32,16 +32,16 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
               onClick={() => setOrderType(t.value)}
               aria-pressed={active}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-4 py-2 text-left transition-all duration-200",
+                "flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-left transition-all duration-150",
                 active
-                  ? "bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 text-white shadow-md shadow-pink-600/40"
-                  : "text-stone-400 hover:bg-white/5 hover:text-stone-200"
+                  ? "bg-[#1E293B] text-white shadow-sm border border-white/10"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               )}
             >
-              <t.icon className={cn("w-4 h-4 shrink-0", active ? "text-white" : "text-cyan-400")} />
+              <t.icon className={cn("w-3.5 h-3.5 shrink-0", active ? "text-rose-400" : "text-slate-400")} />
               <span>
-                <span className="block text-xs leading-tight font-extrabold tracking-tight">{t.label}</span>
-                <span className={cn("block text-[10px] leading-tight", active ? "text-pink-100/90" : "text-stone-500")}>
+                <span className="block text-xs leading-tight font-bold tracking-tight">{t.label}</span>
+                <span className={cn("block text-[10px] leading-tight", active ? "text-slate-300" : "text-slate-500")}>
                   {t.sub}
                 </span>
               </span>
@@ -50,22 +50,22 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
         })}
       </div>
 
-      {/* Customer Name Input (Required - Neon Cyan Focus) */}
+      {/* Customer Name Input */}
       <label
         className={cn(
-          "flex flex-1 items-center gap-3 rounded-xl border bg-[#0D0A1F]/90 px-3.5 transition-all focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/30",
+          "flex flex-1 items-center gap-2.5 rounded-xl border bg-[#0D121D] px-3.5 transition-all focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/30",
           nameInvalid
             ? "animate-shake border-red-500 ring-2 ring-red-500/40"
-            : "border-pink-500/25"
+            : "border-white/10"
         )}
       >
-        <User className="w-4 h-4 shrink-0 text-cyan-400" />
+        <User className="w-4 h-4 shrink-0 text-slate-400" />
         <span className="flex flex-1 flex-col justify-center py-1">
-          <span className="text-[10px] font-extrabold tracking-wider text-pink-300 uppercase flex items-center justify-between">
+          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
             <span className="flex items-center gap-1">
-              Customer Name <span className="text-pink-400 font-black">*</span>
+              Customer Name <span className="text-rose-400 font-bold">*</span>
             </span>
-            <span className="font-mono text-[9px] text-cyan-400/70 font-normal">Wajib untuk cup label</span>
+            <span className="font-mono text-[9px] text-slate-500 font-normal">Wajib untuk cup label</span>
           </span>
           <input
             ref={nameRef}
@@ -75,16 +75,16 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
             autoComplete="off"
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="e.g. Sarah, David, Liam..."
-            className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder:text-xs placeholder:font-normal placeholder:text-stone-500"
+            className="w-full bg-transparent text-sm font-semibold text-white outline-none placeholder:text-xs placeholder:font-normal placeholder:text-slate-500"
           />
         </span>
       </label>
 
-      {/* Table / Pager ID (Optional) */}
-      <label className="flex w-36 lg:w-44 shrink-0 items-center gap-2.5 rounded-xl border border-pink-500/25 bg-[#0D0A1F]/90 px-3 transition-all focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-400/30">
-        <Hash className="w-4 h-4 shrink-0 text-orange-400" />
+      {/* Table / Pager ID */}
+      <label className="flex w-36 lg:w-40 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0D121D] px-3 transition-all focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20">
+        <Hash className="w-3.5 h-3.5 shrink-0 text-slate-400" />
         <span className="flex flex-1 flex-col justify-center py-1">
-          <span className="text-[10px] font-extrabold tracking-wider text-orange-300 uppercase">
+          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
             {orderType === "DINE_IN" ? "Table #" : "Pager ID"}
           </span>
           <input
@@ -94,7 +94,7 @@ export function OrderHeader({ nameRef, nameInvalid }: { nameRef: Ref<HTMLInputEl
             autoComplete="off"
             onChange={(e) => setTableNumber(e.target.value)}
             placeholder="Optional"
-            className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder:text-xs placeholder:font-normal placeholder:text-stone-500"
+            className="w-full bg-transparent text-sm font-semibold text-white outline-none placeholder:text-xs placeholder:font-normal placeholder:text-slate-500"
           />
         </span>
       </label>

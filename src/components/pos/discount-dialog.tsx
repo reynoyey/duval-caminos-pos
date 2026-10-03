@@ -49,14 +49,14 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl bg-[#100C29] border border-pink-500/30 text-white shadow-2xl shadow-pink-950/50 p-6 overflow-hidden">
-        <DialogHeader className="pb-3 border-b border-pink-500/20">
-          <DialogTitle className="flex items-center gap-2 text-white text-lg font-black">
-            <BadgePercent className="w-5 h-5 text-pink-400" />
+      <DialogContent className="sm:max-w-xl bg-[#111726] border border-white/10 text-white shadow-2xl shadow-black/80 p-6 overflow-hidden">
+        <DialogHeader className="pb-3 border-b border-white/10">
+          <DialogTitle className="flex items-center gap-2 text-white text-lg font-bold">
+            <BadgePercent className="w-5 h-5 text-rose-400" />
             <span>Promotions & Vouchers</span>
           </DialogTitle>
-          <DialogDescription className="text-pink-200/70 text-xs">
-            Subtotal saat ini {formatRupiah(subtotal)}. Diskon dipotong sebelum kalkulasi pajak PB1 10%.
+          <DialogDescription className="text-slate-400 text-xs">
+            Subtotal saat ini {formatRupiah(subtotal)}. Diskon dipotong sebelum kalkulasi total.
           </DialogDescription>
         </DialogHeader>
 
@@ -75,19 +75,19 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                 className={cn(
                   "flex items-start gap-2.5 rounded-xl border p-3 text-left transition-all duration-150 select-none",
                   active
-                    ? "border-pink-400 bg-pink-500/20 text-white ring-1 ring-pink-400 shadow-md shadow-pink-500/20"
-                    : "border-pink-500/20 bg-[#0B081E] text-stone-300 hover:border-cyan-400/50 hover:text-white"
+                    ? "border-rose-500/80 bg-rose-500/10 text-white ring-1 ring-rose-500/40"
+                    : "border-white/10 bg-[#0E131F] text-slate-300 hover:border-white/20 hover:text-white"
                 )}
               >
                 <Ticket className="mt-0.5 w-4 h-4 shrink-0 text-cyan-400" />
                 <span className="flex-1 min-w-0">
                   <span className="block text-xs font-bold text-white">{v.label}</span>
-                  <span className="block text-[11px] text-pink-200/60 truncate">{v.description}</span>
-                  <span className="mt-0.5 block font-mono text-[10px] font-bold tracking-wider text-pink-300">
+                  <span className="block text-[11px] text-slate-400 truncate">{v.description}</span>
+                  <span className="mt-0.5 block font-mono text-[10px] font-bold tracking-wider text-rose-400">
                     {v.code}
                   </span>
                 </span>
-                <span className="text-xs font-mono font-bold text-cyan-300 tabular-nums shrink-0">
+                <span className="text-xs font-mono font-bold text-cyan-400 tabular-nums shrink-0">
                   −{formatRupiah(savings)}
                 </span>
               </button>
@@ -96,8 +96,8 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </div>
 
         {/* Custom Voucher Code Entry */}
-        <div className="space-y-1.5 pt-3 border-t border-pink-500/20">
-          <Label htmlFor="voucher-code" className="text-xs text-pink-200 font-bold">
+        <div className="space-y-1.5 pt-3 border-t border-white/10">
+          <Label htmlFor="voucher-code" className="text-xs text-slate-300 font-semibold">
             Redeem Voucher Code
           </Label>
           <div className="flex gap-2">
@@ -107,12 +107,12 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && applyCode()}
               placeholder="e.g. CAMINOS10, MEMBER15"
-              className="h-10 font-mono font-bold tracking-wider text-xs bg-[#0B081E] border border-pink-500/25 text-cyan-300 focus:border-cyan-400"
+              className="h-10 font-mono font-bold tracking-wider text-xs bg-[#161F30] border border-white/10 text-cyan-400 focus:border-cyan-400"
             />
             <Button
               type="button"
               onClick={applyCode}
-              className="bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white font-extrabold text-xs h-10 px-5 shadow-md shadow-pink-600/30"
+              className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs h-10 px-5 shadow-sm transition-all"
             >
               Apply Code
             </Button>
@@ -120,18 +120,18 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </div>
 
         {/* Manual Discount Entry */}
-        <div className="space-y-2 pt-3 border-t border-pink-500/20">
-          <Label className="text-xs text-pink-200 font-bold">Manual Cashier Discount</Label>
+        <div className="space-y-2 pt-3 border-t border-white/10">
+          <Label className="text-xs text-slate-300 font-semibold">Manual Cashier Discount</Label>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-xl border border-pink-500/25 bg-[#0B081E] p-0.5">
+            <div className="flex rounded-xl border border-white/10 bg-[#0E131F] p-0.5">
               <button
                 type="button"
                 onClick={() => setManualType("PERCENT")}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-bold transition",
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
                   manualType === "PERCENT"
-                    ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm"
-                    : "text-stone-400 hover:text-white"
+                    ? "bg-[#1E293B] text-white border border-white/10"
+                    : "text-slate-400 hover:text-white"
                 )}
               >
                 % Percent
@@ -140,10 +140,10 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                 type="button"
                 onClick={() => setManualType("AMOUNT")}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-bold transition",
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
                   manualType === "AMOUNT"
-                    ? "bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-sm"
-                    : "text-stone-400 hover:text-white"
+                    ? "bg-[#1E293B] text-white border border-white/10"
+                    : "text-slate-400 hover:text-white"
                 )}
               >
                 Fixed IDR
@@ -154,14 +154,14 @@ export function DiscountDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               value={manualValue}
               onChange={(e) => setManualValue(e.target.value)}
               placeholder={manualType === "PERCENT" ? "10" : "15000"}
-              className="h-10 text-xs bg-[#0B081E] border border-pink-500/25 text-white focus:border-cyan-400 flex-1 font-mono"
+              className="h-10 text-xs bg-[#161F30] border border-white/10 text-white focus:border-cyan-400 flex-1 font-mono"
             />
 
             <Button
               type="button"
               variant="outline"
               onClick={applyManual}
-              className="border-pink-500/30 text-stone-200 hover:bg-pink-500/10 hover:text-white text-xs h-10 px-4"
+              className="border-white/10 bg-transparent text-slate-300 hover:bg-white/5 hover:text-white text-xs h-10 px-4"
             >
               Apply
             </Button>

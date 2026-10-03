@@ -4,37 +4,36 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
-   Duval Caminos Coffee — MIAMI VIBES THEME
-   Electric Flamingo Pink (#FF2A85), Miami Ocean Cyan (#00F5D4),
-   Sunset Coral Orange (#FF8C42), and Midnight Cyberpunk Indigo (#0A0818).
+   Duval Caminos Coffee — Refined Miami Palette
+   Sleek dark slate nocturnal theme with subtle Coral Rose & Ocean Cyan accents.
+   Engineered for maximum eye comfort during long cashier shifts.
    ========================================================================== */
 :root {
-  --radius: 1rem;
+  --radius: 0.875rem;
 
-  --background: oklch(0.12 0.03 285);         /* Deep Midnight Indigo */
-  --foreground: oklch(0.98 0.01 280);         /* Pure Crisp White/Cyan */
-  --card: oklch(0.16 0.04 290 / 0.85);        /* Synthwave Dark Glass */
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.15 0.04 290);
-  --popover-foreground: var(--foreground);
+  --background: #0B0E17;
+  --foreground: #F8FAFC;
+  --card: #111726;
+  --card-foreground: #F8FAFC;
+  --popover: #111726;
+  --popover-foreground: #F8FAFC;
 
-  /* Miami Neon Primary: Electric Flamingo Pink */
-  --primary: #FF2A85;
+  /* Sophisticated Miami Accents */
+  --primary: #F43F5E;                         /* Coral Rose */
   --primary-foreground: #FFFFFF;
 
-  /* Miami Neon Secondary: Electric Cyan / Turquoise */
-  --secondary: #00F5D4;
-  --secondary-foreground: #0A0818;
+  --secondary: #06B6D4;                       /* Ocean Cyan */
+  --secondary-foreground: #0B0E17;
 
-  --muted: oklch(0.22 0.03 285);
-  --muted-foreground: oklch(0.72 0.03 270);
-  --accent: #FF8C42;                         /* Sunset Coral */
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #F43F5E;
   --accent-foreground: #FFFFFF;
-  --destructive: #FF3366;
-  --success: #00F5D4;
-  --border: rgba(255, 42, 133, 0.22);
-  --input: oklch(0.2 0.03 285);
-  --ring: #FF2A85;
+  --destructive: #EF4444;
+  --success: #10B981;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: #151D2D;
+  --ring: #F43F5E;
 }
 
 @theme inline {
@@ -74,14 +73,13 @@
   }
   html,
   body {
-    @apply h-full overflow-hidden bg-[#0A0818] text-foreground antialiased;
+    @apply h-full overflow-hidden bg-[#0B0E17] text-foreground antialiased;
     font-feature-settings: "tnum" 1, "cv11" 1;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     background-image: 
-      radial-gradient(at 10% 10%, rgba(255, 42, 133, 0.15) 0px, transparent 50%),
-      radial-gradient(at 90% 20%, rgba(0, 245, 212, 0.12) 0px, transparent 50%),
-      radial-gradient(at 50% 90%, rgba(138, 43, 226, 0.15) 0px, transparent 60%);
+      radial-gradient(at 15% 10%, rgba(244, 63, 94, 0.035) 0px, transparent 40%),
+      radial-gradient(at 85% 80%, rgba(6, 182, 212, 0.025) 0px, transparent 40%);
     background-attachment: fixed;
   }
   input,
@@ -96,56 +94,47 @@
 
 @layer utilities {
   .glass-miami {
-    background: rgba(18, 14, 38, 0.78);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255, 42, 133, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: rgba(17, 23, 38, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
   }
 
   .text-gradient-miami {
-    background: linear-gradient(135deg, #FF2A85 0%, #FF8C42 50%, #00F5D4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #FFFFFF;
   }
 
   .text-gradient-sunset {
-    background: linear-gradient(135deg, #FF2A85 0%, #FF9E00 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #F8FAFC;
   }
 
   .text-gradient-cyan {
-    background: linear-gradient(135deg, #00F5D4 0%, #00B4D8 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #38BDF8;
   }
 
   .glow-pink {
-    box-shadow: 0 0 20px -3px rgba(255, 42, 133, 0.45);
+    box-shadow: 0 0 16px -2px rgba(244, 63, 94, 0.25);
   }
 
   .glow-cyan {
-    box-shadow: 0 0 20px -3px rgba(0, 245, 212, 0.45);
+    box-shadow: 0 0 16px -2px rgba(6, 182, 212, 0.25);
   }
 
   .glow-sunset {
-    box-shadow: 0 0 20px -3px rgba(255, 140, 66, 0.45);
+    box-shadow: 0 0 16px -2px rgba(251, 146, 60, 0.25);
   }
 
   .btn-miami {
-    background: linear-gradient(135deg, #FF2A85 0%, #FF6B00 100%);
+    background: #E11D48;
     color: #FFFFFF;
-    font-weight: 800;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px -2px rgba(255, 42, 133, 0.5);
+    font-weight: 700;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 10px -1px rgba(225, 29, 72, 0.35);
   }
   .btn-miami:hover {
-    background: linear-gradient(135deg, #FF459B 0%, #FF8533 100%);
-    box-shadow: 0 6px 25px 0px rgba(255, 42, 133, 0.7);
+    background: #F43F5E;
+    box-shadow: 0 4px 16px 0px rgba(244, 63, 94, 0.45);
     transform: translateY(-1px);
   }
   .btn-miami:active {
@@ -153,21 +142,19 @@
   }
 
   .btn-cyan {
-    background: linear-gradient(135deg, #00F5D4 0%, #00B4D8 100%);
-    color: #0A0818;
-    font-weight: 800;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px -2px rgba(0, 245, 212, 0.4);
+    background: #0891B2;
+    color: #FFFFFF;
+    font-weight: 700;
+    transition: all 0.15s ease;
   }
   .btn-cyan:hover {
-    background: linear-gradient(135deg, #33FFDF 0%, #33C5E0 100%);
-    box-shadow: 0 6px 25px 0px rgba(0, 245, 212, 0.6);
+    background: #06B6D4;
     transform: translateY(-1px);
   }
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 42, 133, 0.4) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
   .no-scrollbar {
     scrollbar-width: none;

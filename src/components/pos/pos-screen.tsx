@@ -109,7 +109,7 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   };
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0A0818] text-white font-sans antialiased selection:bg-pink-500 selection:text-white">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0B0E17] text-white font-sans antialiased selection:bg-rose-500 selection:text-white">
       {/* Top Navigation Bar */}
       <TopBar
         activeTab={activeTab}

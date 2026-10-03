@@ -143,21 +143,20 @@ export function ShiftReportsView() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0818] p-4 lg:p-6 overflow-y-auto no-scrollbar select-none text-white">
+    <div className="flex flex-col h-full bg-[#0B0E17] p-4 lg:p-6 overflow-y-auto no-scrollbar select-none text-white">
       {/* Header & Export Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-pink-500/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              <span>Shift Audit & Financial Recap Engine</span>
-              <span className="text-gradient-miami text-base">📊</span>
+            <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <span>Shift Audit & Financial Recap</span>
             </h2>
-            <span className="rounded-full bg-cyan-400/20 border border-cyan-400/40 px-2.5 py-0.5 text-[10px] font-black text-cyan-300 uppercase tracking-wider">
+            <span className="rounded-full bg-white/10 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
               {shiftFilter === "ALL" ? "All Shifts" : shiftFilter === "SHIFT_1" ? "Shift 1 Morning" : "Shift 2 Evening"}
             </span>
           </div>
-          <p className="text-xs text-pink-200/70 mt-0.5">
-            Audit register transactions, reconcile drawer cash, and export multi-sheet formatted Excel reports.
+          <p className="text-xs text-slate-400 mt-0.5">
+            Audit register transactions, reconcile drawer cash, and export formatted Excel reports.
           </p>
         </div>
 
@@ -167,9 +166,9 @@ export function ShiftReportsView() {
             type="button"
             variant="outline"
             onClick={() => setIsFilterModalOpen(true)}
-            className="border-pink-500/30 bg-[#140F33] text-stone-200 hover:bg-pink-500/10 hover:text-white text-xs h-11 px-4"
+            className="border-white/10 bg-[#161F30] text-slate-300 hover:bg-white/10 hover:text-white text-xs h-11 px-4"
           >
-            <Filter className="w-4 h-4 mr-1.5 text-pink-400" />
+            <Filter className="w-4 h-4 mr-1.5 text-cyan-400" />
             <span>Filter Date & Shift Range</span>
           </Button>
 
@@ -178,24 +177,24 @@ export function ShiftReportsView() {
             type="button"
             onClick={handleExportExcel}
             disabled={isExporting}
-            className="bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white font-black text-xs h-11 px-5 shadow-lg shadow-pink-600/30 transition-all hover:scale-[1.02]"
+            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs h-11 px-5 shadow-sm transition-all"
           >
-            <FileSpreadsheet className="w-4 h-4 mr-2 text-cyan-300" />
+            <FileSpreadsheet className="w-4 h-4 mr-2 text-white" />
             <span>{isExporting ? "Generating..." : "Export Shift Report (.xlsx)"}</span>
           </Button>
         </div>
       </div>
 
       {/* Active Filter Indicators */}
-      <div className="flex flex-wrap items-center gap-2 py-3 text-xs text-pink-200/70">
-        <span className="font-bold text-white">Active Scope:</span>
-        <span className="px-3 py-0.5 rounded-full bg-[#140F33] border border-pink-500/20 text-cyan-300 font-mono text-[11px] font-bold">
+      <div className="flex flex-wrap items-center gap-2 py-3 text-xs text-slate-400">
+        <span className="font-semibold text-white">Active Scope:</span>
+        <span className="px-3 py-0.5 rounded-full bg-[#161F30] border border-white/10 text-cyan-400 font-mono text-[11px] font-bold">
           Date: {dateFilter} {dateFilter === "CUSTOM" && `(${customDate})`}
         </span>
-        <span className="px-3 py-0.5 rounded-full bg-[#140F33] border border-pink-500/20 text-pink-300 font-mono text-[11px] font-bold">
+        <span className="px-3 py-0.5 rounded-full bg-[#161F30] border border-white/10 text-rose-400 font-mono text-[11px] font-bold">
           Shift: {shiftFilter}
         </span>
-        <span className="px-3 py-0.5 rounded-full bg-[#140F33] border border-pink-500/20 text-stone-300 font-mono text-[11px]">
+        <span className="px-3 py-0.5 rounded-full bg-[#161F30] border border-white/10 text-slate-300 font-mono text-[11px]">
           {filteredOrders.length} Transactions Included
         </span>
       </div>
@@ -203,57 +202,57 @@ export function ShiftReportsView() {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 my-3">
         {/* Total Sales */}
-        <div className="p-4 rounded-2xl border border-pink-500/20 bg-[#120E2C]/80 backdrop-blur-md shadow-xl">
-          <div className="flex items-center justify-between text-pink-200/80 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Grand Total Sales</span>
-            <DollarSign className="w-4 h-4 text-pink-400" />
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0E131F] shadow-sm">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Grand Total Sales</span>
+            <DollarSign className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-cyan-300 font-mono">
+          <div className="text-2xl font-bold text-cyan-400 font-mono">
             {formatRupiah(summary.totalSales)}
           </div>
-          <p className="text-[10px] text-pink-200/60 mt-1 font-medium">
+          <p className="text-[10px] text-slate-400 mt-1 font-medium">
             Net Revenue: {formatRupiah(summary.netSales)}
           </p>
         </div>
 
         {/* Cups Sold */}
-        <div className="p-4 rounded-2xl border border-pink-500/20 bg-[#120E2C]/80 backdrop-blur-md shadow-xl">
-          <div className="flex items-center justify-between text-pink-200/80 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Beverage Cups Sold</span>
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0E131F] shadow-sm">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Beverage Cups Sold</span>
             <Coffee className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-white font-mono">
-            {summary.totalCups} <span className="text-sm font-normal text-pink-200/60">cups</span>
+          <div className="text-2xl font-bold text-white font-mono">
+            {summary.totalCups} <span className="text-sm font-normal text-slate-400">cups</span>
           </div>
-          <p className="text-[10px] text-pink-200/60 mt-1 font-medium">
+          <p className="text-[10px] text-slate-400 mt-1 font-medium">
             Total Items: {summary.totalItems} (inc. pastries)
           </p>
         </div>
 
         {/* Cash on Hand */}
-        <div className="p-4 rounded-2xl border border-pink-500/20 bg-[#120E2C]/80 backdrop-blur-md shadow-xl">
-          <div className="flex items-center justify-between text-pink-200/80 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Expected Cash Drawer</span>
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0E131F] shadow-sm">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Expected Cash Drawer</span>
             <Banknote className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-cyan-300 font-mono">
+          <div className="text-2xl font-bold text-cyan-400 font-mono">
             {formatRupiah(summary.cashOnHand)}
           </div>
-          <p className="text-[10px] text-pink-200/60 mt-1 font-medium">
+          <p className="text-[10px] text-slate-400 mt-1 font-medium">
             Opening Float: {formatRupiah(summary.openingCash)}
           </p>
         </div>
 
         {/* Orders Count & AOV */}
-        <div className="p-4 rounded-2xl border border-pink-500/20 bg-[#120E2C]/80 backdrop-blur-md shadow-xl">
-          <div className="flex items-center justify-between text-pink-200/80 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Average Ticket (AOV)</span>
-            <TrendingUp className="w-4 h-4 text-pink-400" />
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0E131F] shadow-sm">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Average Ticket (AOV)</span>
+            <TrendingUp className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-black text-white font-mono">
+          <div className="text-2xl font-bold text-white font-mono">
             {formatRupiah(summary.averageTicket)}
           </div>
-          <p className="text-[10px] text-pink-200/60 mt-1 font-medium">
+          <p className="text-[10px] text-slate-400 mt-1 font-medium">
             {summary.transactionCount} transactions settled
           </p>
         </div>
@@ -262,8 +261,8 @@ export function ShiftReportsView() {
       {/* Tender Reconcile & Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-3">
         {/* Payment Methods */}
-        <div className="rounded-2xl border border-pink-500/20 bg-[#100C29]/80 backdrop-blur-md p-5 shadow-xl">
-          <h3 className="text-xs font-black uppercase tracking-wider text-pink-200 mb-3 flex items-center gap-2">
+        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-5 shadow-sm">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-2">
             <Receipt className="w-4 h-4 text-cyan-400" />
             <span>Tender & Payment Method Breakdown</span>
           </h3>
@@ -365,12 +364,12 @@ export function ShiftReportsView() {
       {/* FILTER MODAL DIALOG: Date & Shift Range + Cash Reconciliation        */}
       {/* ==================================================================== */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-        <DialogContent className="sm:max-w-md bg-stone-900 border-stone-800 text-stone-100 p-0 overflow-hidden shadow-2xl">
-          <div className="bg-gradient-to-br from-amber-600/20 via-stone-900 to-stone-950 px-5 pt-4 pb-3 border-b border-stone-800">
-            <DialogTitle className="text-base font-bold text-stone-100">
+        <DialogContent className="sm:max-w-md bg-[#111726] border border-white/10 text-white p-0 overflow-hidden shadow-2xl shadow-black/80">
+          <div className="bg-[#161F30] px-5 pt-4 pb-3 border-b border-white/10">
+            <DialogTitle className="text-base font-bold text-white">
               Filter Shift & Cash Reconciliation
             </DialogTitle>
-            <DialogDescription className="text-xs text-stone-400 mt-0.5">
+            <DialogDescription className="text-xs text-slate-400 mt-0.5">
               Select date scope, shift window, and verify physical cash counted.
             </DialogDescription>
           </div>

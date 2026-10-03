@@ -86,32 +86,31 @@ export function ModifierDialog() {
 
   return (
     <Dialog open={s.isOpen} onOpenChange={(o) => !o && s.close()}>
-      <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl bg-[#100C29] border border-pink-500/30 text-white shadow-2xl shadow-pink-950/50">
+      <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl bg-[#111726] border border-white/10 text-white shadow-2xl shadow-black/80">
         {product && (
           <>
             {/* Header */}
-            <div className="relative border-b border-pink-500/20 bg-gradient-to-r from-pink-600/25 via-purple-900/25 to-[#100C29] px-6 pt-5 pb-4">
+            <div className="relative border-b border-white/10 bg-[#161F30] px-6 pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black tracking-widest text-pink-300 uppercase">
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                   {product.categoryName}
                 </span>
                 {product.tag && (
-                  <span className="rounded-md bg-pink-500/20 px-2 py-0.5 text-[9px] font-extrabold text-pink-300 border border-pink-500/40 uppercase">
+                  <span className="rounded-md bg-white/5 px-2 py-0.5 text-[9px] font-bold text-slate-300 border border-white/10 uppercase">
                     {product.tag}
                   </span>
                 )}
               </div>
-              <DialogTitle className="mt-1 text-xl font-black text-white flex items-center gap-2">
-                <span>{product.name}</span>
-                <Sparkles className="w-4 h-4 text-cyan-300" />
+              <DialogTitle className="mt-1 text-xl font-bold text-white">
+                {product.name}
               </DialogTitle>
-              <DialogDescription className="mt-0.5 text-xs text-pink-200/70">
+              <DialogDescription className="mt-0.5 text-xs text-slate-400">
                 {product.description || "Customise your handcrafted specialty coffee"} · Base {formatRupiah(product.basePrice)}
               </DialogDescription>
             </div>
 
             {/* Modifier Groups scroll area */}
-            <div className="no-scrollbar flex-1 space-y-5 overflow-y-auto px-6 py-5">
+            <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
               {product.modifierGroups.map((group) => {
                 const selected = s.selections[group.id] ?? [];
                 const isInvalid = s.invalidGroupIds.includes(group.id);
@@ -120,24 +119,24 @@ export function ModifierDialog() {
                   <div
                     key={group.id}
                     className={cn(
-                      "rounded-2xl border p-4 transition-all",
+                      "rounded-xl border p-4 transition-all",
                       isInvalid
-                        ? "animate-shake border-red-500/80 bg-red-950/30 ring-2 ring-red-500/40"
-                        : "border-pink-500/20 bg-[#0B081E]"
+                        ? "animate-shake border-red-500/80 bg-red-950/20 ring-1 ring-red-500/40"
+                        : "border-white/10 bg-[#0E131F]"
                     )}
                   >
                     {/* Group Header */}
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black uppercase tracking-wider text-pink-200">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
                           {group.name}
                         </span>
                         {group.isRequired ? (
-                          <span className="rounded-md bg-pink-500/20 px-2 py-0.2 text-[9px] font-extrabold text-pink-300 border border-pink-500/40">
+                          <span className="rounded-md bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-slate-300 border border-white/10">
                             Required
                           </span>
                         ) : (
-                          <span className="text-[10px] text-pink-200/60 font-medium">
+                          <span className="text-[10px] text-slate-400 font-medium">
                             Optional {group.maxSelect > 1 && `(up to ${group.maxSelect})`}
                           </span>
                         )}
@@ -151,7 +150,7 @@ export function ModifierDialog() {
                     </div>
 
                     {/* Options Grid */}
-                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {group.options.map((opt) => {
                         const active = selected.includes(opt.id);
                         const Icon = OPTION_ICON[opt.code];
@@ -162,10 +161,10 @@ export function ModifierDialog() {
                             type="button"
                             onClick={() => s.toggleOption(group, opt.id)}
                             className={cn(
-                              "relative flex items-center justify-between rounded-xl border p-3 text-left text-xs font-bold transition-all duration-150 select-none",
+                              "relative flex items-center justify-between rounded-xl border p-3 text-left text-xs font-medium transition-all duration-150 select-none",
                               active
-                                ? "border-pink-400 bg-gradient-to-r from-pink-600/35 to-orange-500/35 text-white shadow-md shadow-pink-500/25 ring-1 ring-pink-400"
-                                : "border-pink-500/20 bg-[#140F33] text-stone-200 hover:border-cyan-400/40 hover:text-white"
+                                ? "border-rose-500/80 bg-rose-500/10 text-white ring-1 ring-rose-500/40"
+                                : "border-white/10 bg-[#161F30] text-slate-300 hover:border-white/20 hover:text-white"
                             )}
                           >
                             <span className="flex items-center gap-2">
@@ -173,7 +172,7 @@ export function ModifierDialog() {
                                 <Icon
                                   className={cn(
                                     "w-3.5 h-3.5 shrink-0",
-                                    opt.code === "TEMP_HOT" ? "text-orange-400" : "text-cyan-400"
+                                    opt.code === "TEMP_HOT" ? "text-amber-400" : "text-cyan-400"
                                   )}
                                 />
                               )}
@@ -182,11 +181,11 @@ export function ModifierDialog() {
 
                             <div className="flex items-center gap-1.5">
                               {opt.priceDelta > 0 && (
-                                <span className="text-[10px] font-mono font-black text-cyan-300 tabular-nums">
+                                <span className="text-[10px] font-mono font-bold text-cyan-400 tabular-nums">
                                   +{formatRupiah(opt.priceDelta)}
                                 </span>
                               )}
-                              {active && <Check className="w-3.5 h-3.5 text-cyan-300" />}
+                              {active && <Check className="w-3.5 h-3.5 text-rose-400" />}
                             </div>
                           </button>
                         );
@@ -197,8 +196,8 @@ export function ModifierDialog() {
               })}
 
               {/* Barista Instructions / Notes */}
-              <div className="rounded-2xl border border-pink-500/20 bg-[#0B081E] p-4">
-                <label className="block text-xs font-black uppercase tracking-wider text-pink-200 mb-2.5">
+              <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-200 mb-2">
                   Barista Instructions & Cup Notes
                 </label>
 
@@ -213,7 +212,7 @@ export function ModifierDialog() {
                         if (!cur) s.setNote(qn);
                         else if (!cur.includes(qn)) s.setNote(`${cur}, ${qn}`);
                       }}
-                      className="rounded-xl border border-pink-500/20 bg-[#140F33] px-3 py-1 text-[10px] font-semibold text-stone-300 hover:border-cyan-400 hover:text-cyan-300 transition-colors"
+                      className="rounded-lg border border-white/10 bg-[#161F30] px-2.5 py-1 text-[10px] font-medium text-slate-300 hover:border-white/20 hover:text-white transition-colors"
                     >
                       +{qn}
                     </button>
@@ -226,32 +225,32 @@ export function ModifierDialog() {
                   placeholder="e.g. Extra hot, write 'Sarah' on cup, separate oat milk..."
                   rows={2}
                   maxLength={140}
-                  className="bg-[#100C29] border border-pink-500/25 text-xs text-white placeholder:text-stone-500 focus:border-cyan-400"
+                  className="bg-[#161F30] border border-white/10 text-xs text-white placeholder:text-slate-500 focus:border-cyan-400"
                 />
               </div>
             </div>
 
             {/* Footer with Qty & Add to Order */}
-            <div className="flex items-center justify-between border-t border-pink-500/20 bg-[#0B081E] px-6 py-4">
+            <div className="flex items-center justify-between border-t border-white/10 bg-[#111726] px-6 py-4">
               {/* Quantity Stepper */}
-              <div className="flex items-center gap-2 rounded-xl border border-pink-500/25 bg-[#140F33] p-1">
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#161F30] p-1">
                 <button
                   type="button"
                   onClick={() => s.setQuantity(s.quantity - 1)}
                   disabled={s.quantity <= 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-300 hover:bg-white/10 hover:text-white disabled:opacity-30 transition-all"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-30 transition-all"
                 >
-                  <Minus className="w-4 h-4 text-cyan-300" />
+                  <Minus className="w-4 h-4 text-cyan-400" />
                 </button>
-                <span className="w-7 text-center font-mono text-sm font-black text-cyan-300">
+                <span className="w-7 text-center font-mono text-sm font-bold text-cyan-400">
                   {s.quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => s.setQuantity(s.quantity + 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-300 hover:bg-white/10 hover:text-white transition-all"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition-all"
                 >
-                  <Plus className="w-4 h-4 text-cyan-300" />
+                  <Plus className="w-4 h-4 text-cyan-400" />
                 </button>
               </div>
 
@@ -261,14 +260,14 @@ export function ModifierDialog() {
                   type="button"
                   variant="outline"
                   onClick={() => s.close()}
-                  className="border-pink-500/30 text-stone-300 hover:bg-pink-500/10 hover:text-white text-xs"
+                  className="border-white/10 bg-transparent text-slate-300 hover:bg-white/5 hover:text-white text-xs"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="button"
                   onClick={submit}
-                  className="bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white font-extrabold text-xs px-6 shadow-lg shadow-pink-600/40 transition-all hover:scale-[1.02]"
+                  className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-6 shadow-md shadow-rose-950/40 transition-all"
                 >
                   {s.editingLineId ? "Update Item" : "Add to Order"} • {formatRupiah(lineTotal)}
                 </Button>

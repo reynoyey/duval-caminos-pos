@@ -178,24 +178,23 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0818] p-3 sm:p-4 lg:p-5 overflow-hidden select-none text-white">
+    <div className="flex flex-col h-full bg-[#0B0E17] p-3 sm:p-4 lg:p-5 overflow-hidden select-none text-white">
       {/* ==================================================================== */}
       {/* Top Header & View Controls                                           */}
       {/* ==================================================================== */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-pink-500/20 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg lg:text-xl font-black tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Live Order Tracker & Kitchen Display</span>
-                <Sparkles className="w-4 h-4 text-cyan-300" />
               </h2>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
                   isSupabaseConfigured
-                    ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/40 shadow-sm shadow-cyan-500/20"
-                    : "bg-pink-500/15 text-pink-300 border-pink-400/40 shadow-sm shadow-pink-500/20"
+                    ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/40"
+                    : "bg-[#161F30] text-slate-300 border-white/10"
                 )}
                 title={
                   isSupabaseConfigured
@@ -207,7 +206,7 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                 {isSupabaseConfigured ? "Supabase Live" : "Local Realtime Bus"}
               </span>
             </div>
-            <p className="text-xs text-pink-200/70 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Sinkronisasi instan real-time layar POS Kasir, Barista KDS, dan Customer Counter TV.
             </p>
           </div>
@@ -224,21 +223,21 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search ticket, name..."
-                className="h-9 w-full rounded-xl border border-pink-500/25 bg-[#0D0A1F]/90 pr-3 pl-8 text-xs text-white placeholder:text-stone-500 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 font-medium"
+                className="h-9 w-full rounded-xl border border-white/10 bg-[#161F30] pr-3 pl-8 text-xs text-white placeholder:text-slate-500 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 font-medium"
               />
             </div>
           )}
 
           {/* Mode Switcher: Barista Prep vs Customer TV */}
-          <div className="flex rounded-xl border border-pink-500/25 bg-[#0B081E] p-1">
+          <div className="flex rounded-xl border border-white/10 bg-[#0E131F] p-1">
             <button
               type="button"
               onClick={() => setViewMode("BARISTA_KDS")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
                 viewMode === "BARISTA_KDS"
-                  ? "bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 text-white shadow-md shadow-pink-600/30"
-                  : "text-stone-400 hover:text-white"
+                  ? "bg-[#1E293B] text-white border border-white/10 shadow-sm"
+                  : "text-slate-400 hover:text-white"
               )}
             >
               <ChefHat className="w-3.5 h-3.5" />
@@ -250,10 +249,10 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
               type="button"
               onClick={() => setViewMode("CUSTOMER_TV")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
                 viewMode === "CUSTOMER_TV"
-                  ? "bg-gradient-to-r from-cyan-600 to-teal-500 text-white shadow-md shadow-cyan-600/30"
-                  : "text-stone-400 hover:text-white"
+                  ? "bg-[#1E293B] text-white border border-white/10 shadow-sm"
+                  : "text-slate-400 hover:text-white"
               )}
             >
               <Tv className="w-3.5 h-3.5" />
@@ -271,10 +270,10 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
               playOrderReadyChime();
               toast.info("Order chime test played");
             }}
-            className="border-pink-500/30 bg-[#140F33] text-stone-300 hover:bg-pink-500/10 hover:text-white h-9 px-2.5"
+            className="border-white/10 bg-[#161F30] text-slate-300 hover:bg-white/10 hover:text-white h-9 px-2.5"
             title="Test Ready Chime Audio"
           >
-            <Volume2 className="w-4 h-4 text-cyan-300" />
+            <Volume2 className="w-4 h-4 text-cyan-400" />
           </Button>
 
           {/* Fullscreen Button */}
@@ -283,10 +282,10 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
             variant="outline"
             size="sm"
             onClick={toggleFullscreen}
-            className="border-pink-500/30 bg-[#140F33] text-stone-300 hover:bg-pink-500/10 hover:text-white h-9 px-2.5"
+            className="border-white/10 bg-[#161F30] text-slate-300 hover:bg-white/10 hover:text-white h-9 px-2.5"
             title="Toggle Fullscreen Display"
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4 text-cyan-300" /> : <Maximize2 className="w-4 h-4 text-cyan-300" />}
+            {isFullscreen ? <Minimize2 className="w-4 h-4 text-cyan-400" /> : <Maximize2 className="w-4 h-4 text-cyan-400" />}
           </Button>
         </div>
       </div>

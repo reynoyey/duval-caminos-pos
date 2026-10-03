@@ -65,7 +65,7 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
     <section aria-label="Menu Catalog" className="flex min-h-0 flex-1 flex-col gap-3">
       {/* Category Tabs & Instant Search */}
       <div className="flex items-center gap-2.5">
-        <nav className="no-scrollbar flex flex-1 gap-2 overflow-x-auto pb-1" role="tablist">
+        <nav className="no-scrollbar flex flex-1 gap-1.5 overflow-x-auto pb-1" role="tablist">
           {tabs.map((c) => {
             const Icon = CATEGORY_ICONS[c.icon ?? "Coffee"] ?? CATEGORY_ICONS.Coffee;
             const active = activeCat === c.id && !query;
@@ -81,18 +81,18 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
                   setQuery("");
                 }}
                 className={cn(
-                  "group flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-xs font-bold transition-all duration-200 select-none shadow-sm",
+                  "group flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all duration-150 select-none shadow-sm",
                   active
-                    ? "border-pink-400 bg-gradient-to-r from-pink-600 via-rose-500 to-orange-500 text-white shadow-lg shadow-pink-600/40"
-                    : "border-pink-500/20 bg-[#120E2C]/80 text-stone-300 hover:border-cyan-400/50 hover:text-white hover:bg-[#1a143d]"
+                    ? "border-white/15 bg-[#1E293B] text-white shadow-sm"
+                    : "border-white/10 bg-[#111726] text-slate-400 hover:border-white/20 hover:text-white hover:bg-[#161F30]"
                 )}
               >
-                <Icon className={cn("w-3.5 h-3.5", active ? "text-white" : "text-cyan-400")} />
+                <Icon className={cn("w-3.5 h-3.5", active ? "text-rose-400" : "text-slate-400")} />
                 <span>{c.name}</span>
                 <span
                   className={cn(
-                    "rounded-md px-1.5 py-0.2 text-[10px] tabular-nums font-black",
-                    active ? "bg-black/30 text-white" : "bg-[#1E1744] text-cyan-300"
+                    "rounded-md px-1.5 py-0.2 text-[10px] tabular-nums font-bold",
+                    active ? "bg-white/15 text-white" : "bg-white/5 text-slate-400"
                   )}
                 >
                   {count}
@@ -104,20 +104,20 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
 
         {/* Quick Search & Menu Manager Shortcut */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="relative w-48 sm:w-56 lg:w-64">
-            <Search className="pointer-events-none absolute top-1/2 left-3 w-3.5 h-3.5 -translate-y-1/2 text-cyan-400" />
+          <div className="relative w-48 sm:w-56 lg:w-60">
+            <Search className="pointer-events-none absolute top-1/2 left-3 w-3.5 h-3.5 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search menu... (/)"
-              className="h-11 w-full rounded-xl border border-pink-500/25 bg-[#0D0A1F]/90 pr-8 pl-8 text-xs font-semibold text-white placeholder:text-stone-500 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all shadow-inner"
+              className="h-10 w-full rounded-xl border border-white/10 bg-[#111726] pr-8 pl-8 text-xs font-medium text-white placeholder:text-slate-500 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-sm"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-stone-400 hover:text-white"
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -128,17 +128,17 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
             <button
               type="button"
               onClick={onOpenMenuManager}
-              className="flex items-center gap-1.5 h-11 px-3.5 rounded-xl border border-pink-500/40 bg-gradient-to-r from-pink-600/30 via-rose-600/30 to-orange-500/30 hover:from-pink-500/50 hover:to-orange-500/50 text-white font-bold text-xs shadow-md shadow-pink-500/20 shrink-0 transition-all"
+              className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl border border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white font-medium text-xs shadow-sm shrink-0 transition-all"
               title="Kelola, tambah, atau hapus menu"
             >
-              <Plus className="w-4 h-4 text-cyan-300" />
+              <Plus className="w-3.5 h-3.5 text-slate-400" />
               <span className="hidden sm:inline">Add/Hapus Menu</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Product Cards Grid (Miami Vibes Holographic Glow) */}
+      {/* Product Cards Grid */}
       <div
         id="product-grid"
         tabIndex={0}
@@ -157,14 +157,10 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
               disabled={!product.isAvailable}
               onClick={() => onPick(product)}
               className={cn(
-                "group relative flex min-h-[155px] flex-col justify-between rounded-2xl border p-3.5 text-left transition-all duration-200 select-none shadow-md",
-                "bg-gradient-to-br backdrop-blur-md hover:-translate-y-1 hover:shadow-xl hover:scale-[1.015]",
-                theme.from,
-                theme.to,
-                theme.border,
-                theme.hoverBorder,
+                "group relative flex min-h-[150px] flex-col justify-between rounded-2xl border p-3.5 text-left transition-all duration-150 select-none shadow-sm",
+                "bg-[#121826] hover:bg-[#161F30] border-white/10 hover:border-white/20",
                 product.isAvailable
-                  ? "active:scale-[0.98]"
+                  ? "active:scale-[0.99]"
                   : "cursor-not-allowed opacity-40 border-stone-800/40 grayscale"
               )}
             >
@@ -172,19 +168,19 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
               <div className="flex items-start justify-between gap-1.5">
                 <div className="flex flex-wrap gap-1">
                   {product.tag ? (
-                    <span className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider", theme.badge)}>
+                    <span className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border", theme.badge)}>
                       <Sparkles className="w-2.5 h-2.5" />
                       {product.tag}
                     </span>
                   ) : (
-                    <span className="text-[10px] uppercase tracking-wider text-pink-200/70 font-extrabold">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                       {product.categoryName}
                     </span>
                   )}
                 </div>
 
                 {inCart > 0 && (
-                  <span className="flex h-5 items-center rounded-full bg-gradient-to-r from-pink-500 to-orange-500 px-2 text-[10px] font-black text-white shadow-md shadow-pink-500/40">
+                  <span className="flex h-5 items-center rounded-full bg-rose-600 px-2 text-[10px] font-bold text-white shadow-sm">
                     {inCart}x
                   </span>
                 )}
@@ -192,11 +188,11 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
 
               {/* Middle: Title & Description */}
               <div className="my-1.5">
-                <h3 className="line-clamp-2 text-sm font-extrabold tracking-tight text-white group-hover:text-cyan-300 transition-colors">
+                <h3 className="line-clamp-2 text-sm font-bold tracking-tight text-white group-hover:text-cyan-300 transition-colors">
                   {product.name}
                 </h3>
                 {product.description && (
-                  <p className="mt-0.5 line-clamp-1 text-[11px] text-pink-100/60 leading-tight">
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400 leading-tight">
                     {product.description}
                   </p>
                 )}
@@ -205,19 +201,19 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
               {/* Bottom: Price & Quick Action Indicator */}
               <div className="flex items-end justify-between pt-2 border-t border-white/10">
                 <div>
-                  <span className="text-[9px] text-pink-200/50 uppercase font-mono block">Base</span>
-                  <span className="text-sm font-black text-cyan-300 tabular-nums">
+                  <span className="text-[9px] text-slate-400 uppercase font-mono block">Base</span>
+                  <span className="text-sm font-bold text-cyan-400 font-mono tabular-nums">
                     {formatRupiah(product.basePrice)}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5">
                   {hasModifiers && (
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 text-pink-300 border border-pink-500/30 font-bold">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-slate-300 border border-white/10 font-medium">
                       Custom
                     </span>
                   )}
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-r from-pink-600 to-orange-500 text-white shadow-md shadow-pink-600/30 group-hover:scale-110 group-hover:shadow-pink-500/60 transition-all">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white group-hover:bg-rose-600 transition-colors">
                     <Plus className="w-4 h-4" />
                   </span>
                 </div>
