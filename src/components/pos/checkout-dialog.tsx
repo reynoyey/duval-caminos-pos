@@ -5,7 +5,7 @@ import { Banknote, QrCode, CreditCard, ArrowRight, CheckCircle2, RotateCcw, Aler
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { cn, formatRupiah } from "@/lib/utils";
-import { quickCashOptions } from "@/lib/pricing";
+import { quickCashOptions, TAX_RATE_PERCENT } from "@/lib/pricing";
 import { useCartStore, useCartTotals } from "@/stores/cart-store";
 import { useOrdersStore } from "@/stores/orders-store";
 import type { OrderRecordDTO, PaymentMethod, QrisMode } from "@/lib/types";
