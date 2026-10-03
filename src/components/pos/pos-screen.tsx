@@ -18,6 +18,7 @@ import { LiveOrdersBoard } from "./live-orders-board";
 import { MenuManager } from "./menu-manager";
 import { ShiftReportsView } from "./shift-reports-view";
 import { SettingsDialog } from "./settings-dialog";
+import { PinLockScreen } from "./pin-lock-screen";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useOrdersStore } from "@/stores/orders-store";
 import { subscribeToMenu, subscribeToOrders } from "@/lib/supabase";
@@ -36,6 +37,21 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [nameInvalid, setNameInvalid] = useState(false);
 
+  // Security / PIN Terminal Lock State
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  useEffect(() => {
+    try {
+      const unlocked = sessionStorage.getItem("duval_pos_unlocked") === "true";
+      setIsUnlocked(unlocked);
+    } catch {
+      setIsUnlocked(false);
+    } finally {
+      setIsAuthChecked(true);
+    }
+  }, []);
+
   const cashierName = useSettingsStore((s) => s.cashierName);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +68,7 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   const fetchLatestCatalog = useMenuStore((s) => s.fetchLatestCatalog);
   const addOrder = useOrdersStore((s) => s.addOrder);
   const updateOrderStatus = useOrdersStore((s) => s.updateOrderStatus);
+  const fetchLatestOrders = useOrdersStore((s) => s.fetchLatestOrders);
 
   // Manual rehydration and multi-device Realtime subscriptions
   useEffect(() => {
@@ -59,8 +76,9 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
     if (initialCatalog && initialCatalog.products.length > 0) {
       hydrateCatalog(initialCatalog);
     }
-    // Background cloud catalog sync
-    fetchLatestCatalog();
+    // Background cloud catalog and orders sync
+    fetchLatestCatalog().catch(() => null);
+    fetchLatestOrders().catch(() => null);
 
     // 1. Subscribe to realtime menu events across devices
     const unsubMenu = subscribeToMenu((event) => {
@@ -87,10 +105,12 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
 
     const interval = setInterval(() => {
       fetchLatestCatalog().catch(() => null);
-    }, 4000);
+      fetchLatestOrders().catch(() => null);
+    }, 3500);
 
     const onFocus = () => {
       fetchLatestCatalog().catch(() => null);
+      fetchLatestOrders().catch(() => null);
     };
     window.addEventListener("focus", onFocus);
 
@@ -100,7 +120,7 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       try { unsubMenu?.(); } catch {}
       try { unsubOrders?.(); } catch {}
     };
-  }, [initialCatalog, hydrateCatalog, fetchLatestCatalog, applyRemoteMenuEvent, addOrder, updateOrderStatus]);
+  }, [initialCatalog, hydrateCatalog, fetchLatestCatalog, fetchLatestOrders, applyRemoteMenuEvent, addOrder, updateOrderStatus]);
 
   // Handle product click
   const handleProductPick = (product: ProductDTO) => {
@@ -155,14 +175,35 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
     setIsReceiptOpen(true);
   };
 
+  // Security Terminal Lock check (Password: "0000")
+  if (!isAuthChecked) {
+    return <div className="fixed inset-0 bg-[#07090E]" />;
+  }
+
+  if (!isUnlocked) {
+    return <PinLockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0B0E17] text-white font-sans antialiased selection:bg-rose-500 selection:text-white">
       {/* Top Navigation Bar */}
       <TopBar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          if (tab === "ORDERS_QUEUE") {
+            fetchLatestOrders().catch(() => null);
+          }
+        }}
         cashierName={cashierName || initialShift?.cashierName || "Alex Rivera"}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onLockTerminal={() => {
+          try {
+            sessionStorage.removeItem("duval_pos_unlocked");
+          } catch {}
+          setIsUnlocked(false);
+          toast.info("Terminal POS telah dikunci");
+        }}
       />
 
       {/* Main Tab Content Area */}

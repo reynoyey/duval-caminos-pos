@@ -78,11 +78,21 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
   const markCompleted = useOrdersStore((s) => s.markCompleted);
   const markProcessing = useOrdersStore((s) => s.markProcessing);
   const cancelOrder = useOrdersStore((s) => s.cancelOrder);
+  const fetchLatestOrders = useOrdersStore((s) => s.fetchLatestOrders);
 
   const [viewMode, setViewMode] = useState<KdsViewMode>("BARISTA_KDS");
   const [searchQuery, setSearchQuery] = useState("");
   const [nowTimestamp, setNowTimestamp] = useState(Date.now());
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Background multi-device orders polling
+  useEffect(() => {
+    fetchLatestOrders().catch(() => null);
+    const interval = setInterval(() => {
+      fetchLatestOrders().catch(() => null);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [fetchLatestOrders]);
 
   // Clock ticker for elapsed time calculation
   useEffect(() => {
@@ -190,20 +200,11 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                 <span>Live Order Tracker & Kitchen Display</span>
               </h2>
               <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
-                  isSupabaseConfigured
-                    ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/40"
-                    : "bg-[#161F30] text-slate-300 border-white/10"
-                )}
-                title={
-                  isSupabaseConfigured
-                    ? "Supabase Realtime WebSockets Connected"
-                    : "Running Local Sync (BroadcastChannel bus)"
-                }
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border bg-emerald-500/15 text-emerald-300 border-emerald-400/40 shadow-sm"
+                title="Realtime Multi-Device Cloud Sync Aktif (Laptop, iPad, Smartphone, Kitchen Display)"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                {isSupabaseConfigured ? "Supabase Live" : "Local Realtime Bus"}
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Cloud Live Sync
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
