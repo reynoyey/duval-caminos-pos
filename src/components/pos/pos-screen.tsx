@@ -19,6 +19,8 @@ import { MenuManager } from "./menu-manager";
 import { ShiftReportsView } from "./shift-reports-view";
 import { SettingsDialog } from "./settings-dialog";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useOrdersStore } from "@/stores/orders-store";
+import { subscribeToMenu, subscribeToOrders } from "@/lib/supabase";
 
 interface Props {
   initialCatalog: CatalogDTO;
@@ -46,14 +48,48 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   const editModifier = useModifierStore((s) => s.openForEdit);
   const hydrateCatalog = useMenuStore((s) => s.hydrateCatalog);
   const products = useMenuStore((s) => s.products);
+  const applyRemoteMenuEvent = useMenuStore((s) => s.applyRemoteMenuEvent);
+  const fetchLatestCatalog = useMenuStore((s) => s.fetchLatestCatalog);
+  const addOrder = useOrdersStore((s) => s.addOrder);
+  const updateOrderStatus = useOrdersStore((s) => s.updateOrderStatus);
 
-  // Manual rehydration to avoid SSR mismatch
+  // Manual rehydration and multi-device Realtime subscriptions
   useEffect(() => {
     useCartStore.persist.rehydrate();
     if (initialCatalog && initialCatalog.products.length > 0) {
       hydrateCatalog(initialCatalog);
     }
-  }, [initialCatalog, hydrateCatalog]);
+    // Background cloud catalog sync
+    fetchLatestCatalog();
+
+    // 1. Subscribe to realtime menu events across devices
+    const unsubMenu = subscribeToMenu((event) => {
+      applyRemoteMenuEvent(event);
+      if (event.type === "PRODUCT_ADDED") {
+        toast.info(`Menu baru ditambahkan dari perangkat lain: "${event.product.name}"`);
+      } else if (event.type === "PRODUCT_UPDATED") {
+        toast.info(`Menu diperbarui: "${event.product.name}"`);
+      } else if (event.type === "PRODUCT_AVAILABILITY_TOGGLED") {
+        toast.info(event.isAvailable ? "Item menu kembali tersedia" : "Item menu ditandai habis");
+      } else if (event.type === "PRODUCT_DELETED") {
+        toast.warning("Satu item menu telah dihapus");
+      }
+    });
+
+    // 2. Subscribe to realtime orders across devices
+    const unsubOrders = subscribeToOrders((event) => {
+      if (event.type === "ORDER_CREATED") {
+        addOrder(event.order, false);
+      } else if (event.type === "ORDER_STATUS_CHANGED") {
+        updateOrderStatus(event.orderId, event.status, false);
+      }
+    });
+
+    return () => {
+      unsubMenu();
+      unsubOrders();
+    };
+  }, [initialCatalog, hydrateCatalog, fetchLatestCatalog, applyRemoteMenuEvent, addOrder, updateOrderStatus]);
 
   // Handle product click
   const handleProductPick = (product: ProductDTO) => {
