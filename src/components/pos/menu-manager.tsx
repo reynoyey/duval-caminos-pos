@@ -132,9 +132,9 @@ export function MenuManager() {
   };
 
   const handleReset = () => {
-    if (confirm("Reset katalog menu kembali ke produk default Duval Caminos Coffee?")) {
+    if (confirm("Kosongkan semua item dalam katalog menu Duval Caminos?")) {
       resetToDefaultMenu();
-      toast.info("Katalog menu dikembalikan ke setelan awal pabrik");
+      toast.info("Katalog menu telah dikosongkan");
     }
   };
 
@@ -163,10 +163,10 @@ export function MenuManager() {
             variant="outline"
             onClick={handleReset}
             className="border-white/10 bg-[#111726] hover:bg-[#182032] text-slate-300 hover:text-white text-xs h-9 transition-all"
-            title="Restore original preset items"
+            title="Kosongkan semua menu"
           >
             <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-            Reset Defaults
+            Kosongkan Menu
           </Button>
 
           <Button
@@ -363,7 +363,9 @@ export function MenuManager() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-slate-500 font-medium">
-                  Tidak ada item menu ditemukan. Klik tombol "+ Add New Menu Item" di atas untuk menambah menu baru.
+                  {products.length === 0
+                    ? "Katalog menu saat ini masih kosong. Klik tombol \"+ Add New Menu Item\" di atas untuk menambahkan menu baru Anda."
+                    : "Tidak ada item menu ditemukan untuk filter atau pencarian ini."}
                 </td>
               </tr>
             )}

@@ -111,7 +111,7 @@ export const useMenuStore = create<MenuState>()(
       resetToDefaultMenu: () => {
         set({
           categories: DEFAULT_CATALOG.categories,
-          products: DEFAULT_CATALOG.products,
+          products: [],
         });
       },
 
@@ -128,7 +128,7 @@ export const useMenuStore = create<MenuState>()(
       },
     }),
     {
-      name: "duval-pos-menu-v3",
+      name: "duval-pos-menu-v4",
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         categories: s.categories,

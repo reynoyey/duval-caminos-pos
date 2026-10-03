@@ -20,7 +20,7 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
   const storeProducts = useMenuStore((s) => s.products);
 
   const categories = storeCategories.length > 0 ? storeCategories : catalog.categories;
-  const products = storeProducts.length > 0 ? storeProducts : catalog.products;
+  const products = storeProducts;
 
   const [activeCat, setActiveCat] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -138,101 +138,131 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
         </div>
       </div>
 
-      {/* Product Cards Grid */}
-      <div
-        id="product-grid"
-        tabIndex={0}
-        className="no-scrollbar grid flex-1 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3 overflow-y-auto pr-1 content-start focus:outline-none"
-      >
-        {filtered.map((product) => {
-          const inCart = qtyByProduct[product.id] ?? 0;
-          const slug = slugById[product.categoryId] ?? "espresso";
-          const theme = CATEGORY_THEME[slug] ?? DEFAULT_THEME;
-          const hasModifiers = product.modifierGroups && product.modifierGroups.length > 0;
-
-          return (
+      {/* Product Cards Grid or Empty State */}
+      {products.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-[#111726]/40 p-8 text-center my-auto min-h-[320px]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-slate-400 mb-3 shadow-inner">
+            <PlusCircle className="w-7 h-7 text-rose-400" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1">
+            Menu Kasir Masih Kosong
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mb-5 leading-relaxed">
+            Belum ada item menu yang terdaftar. Anda dapat menambahkan menu kopi, minuman, atau makanan Anda sendiri lewat Menu Manager.
+          </p>
+          {onOpenMenuManager && (
             <button
-              key={product.id}
-              id={`product-card-${product.sku.toLowerCase()}`}
-              disabled={!product.isAvailable}
-              onClick={() => onPick(product)}
-              className={cn(
-                "group relative flex min-h-[135px] sm:min-h-[145px] flex-col justify-between rounded-2xl border p-3 sm:p-3.5 text-left transition-all duration-150 select-none shadow-sm",
-                "bg-[#121826] hover:bg-[#161F30] border-white/10 hover:border-white/20",
-                product.isAvailable
-                  ? "active:scale-[0.99]"
-                  : "cursor-not-allowed opacity-40 border-stone-800/40 grayscale"
-              )}
+              type="button"
+              onClick={onOpenMenuManager}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg transition-all active:scale-95"
             >
-              {/* Top Row: Tag / Category & In-Cart Badge */}
-              <div className="flex items-start justify-between gap-1.5">
-                <div className="flex flex-wrap gap-1">
-                  {product.tag ? (
-                    <span className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border", theme.badge)}>
-                      <Sparkles className="w-2.5 h-2.5" />
-                      {product.tag}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                      {product.categoryName}
-                    </span>
-                  )}
-                </div>
-
-                {inCart > 0 && (
-                  <span className="flex h-5 items-center rounded-full bg-rose-600 px-2 text-[10px] font-bold text-white shadow-sm">
-                    {inCart}x
-                  </span>
-                )}
-              </div>
-
-              {/* Middle: Title & Description */}
-              <div className="my-1.5">
-                <h3 className="line-clamp-2 text-sm font-bold tracking-tight text-white group-hover:text-cyan-300 transition-colors">
-                  {product.name}
-                </h3>
-                {product.description && (
-                  <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400 leading-tight">
-                    {product.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Bottom: Price & Quick Action Indicator */}
-              <div className="flex items-end justify-between pt-2 border-t border-white/10">
-                <div>
-                  <span className="text-[9px] text-slate-400 uppercase font-mono block">Base</span>
-                  <span className="text-sm font-bold text-cyan-400 font-mono tabular-nums">
-                    {formatRupiah(product.basePrice)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {hasModifiers && (
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-slate-300 border border-white/10 font-medium">
-                      Custom
-                    </span>
-                  )}
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white group-hover:bg-rose-600 transition-colors">
-                    <Plus className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-
-              {/* Sold Out Overlay */}
-              {!product.isAvailable && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/85 backdrop-blur-[2px] p-2 text-center">
-                  <AlertCircle className="w-5 h-5 text-red-400 mb-1" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-red-400">
-                    Sold Out
-                  </span>
-                  <span className="text-[10px] text-stone-400">Out of Stock</span>
-                </div>
-              )}
+              <Plus className="w-4 h-4" />
+              <span>+ Tambah Menu Baru Sekarang</span>
             </button>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-[#111726]/30 p-8 text-center my-auto min-h-[260px]">
+          <Search className="w-7 h-7 text-slate-500 mb-2" />
+          <h4 className="text-sm font-semibold text-white">Tidak ada menu yang sesuai</h4>
+          <p className="text-xs text-slate-400 mt-1">Coba kata kunci pencarian lain atau pilih kategori lain.</p>
+        </div>
+      ) : (
+        <div
+          id="product-grid"
+          tabIndex={0}
+          className="no-scrollbar grid flex-1 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3 overflow-y-auto pr-1 content-start focus:outline-none"
+        >
+          {filtered.map((product) => {
+            const inCart = qtyByProduct[product.id] ?? 0;
+            const slug = slugById[product.categoryId] ?? "espresso";
+            const theme = CATEGORY_THEME[slug] ?? DEFAULT_THEME;
+            const hasModifiers = product.modifierGroups && product.modifierGroups.length > 0;
+
+            return (
+              <button
+                key={product.id}
+                id={`product-card-${product.sku.toLowerCase()}`}
+                disabled={!product.isAvailable}
+                onClick={() => onPick(product)}
+                className={cn(
+                  "group relative flex min-h-[135px] sm:min-h-[145px] flex-col justify-between rounded-2xl border p-3 sm:p-3.5 text-left transition-all duration-150 select-none shadow-sm",
+                  "bg-[#121826] hover:bg-[#161F30] border-white/10 hover:border-white/20",
+                  product.isAvailable
+                    ? "active:scale-[0.99]"
+                    : "cursor-not-allowed opacity-40 border-stone-800/40 grayscale"
+                )}
+              >
+                {/* Top Row: Tag / Category & In-Cart Badge */}
+                <div className="flex items-start justify-between gap-1.5">
+                  <div className="flex flex-wrap gap-1">
+                    {product.tag ? (
+                      <span className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border", theme.badge)}>
+                        <Sparkles className="w-2.5 h-2.5" />
+                        {product.tag}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                        {product.categoryName}
+                      </span>
+                    )}
+                  </div>
+
+                  {inCart > 0 && (
+                    <span className="flex h-5 items-center rounded-full bg-rose-600 px-2 text-[10px] font-bold text-white shadow-sm">
+                      {inCart}x
+                    </span>
+                  )}
+                </div>
+
+                {/* Middle: Title & Description */}
+                <div className="my-1.5">
+                  <h3 className="line-clamp-2 text-sm font-bold tracking-tight text-white group-hover:text-cyan-300 transition-colors">
+                    {product.name}
+                  </h3>
+                  {product.description && (
+                    <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400 leading-tight">
+                      {product.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bottom: Price & Quick Action Indicator */}
+                <div className="flex items-end justify-between pt-2 border-t border-white/10">
+                  <div>
+                    <span className="text-[9px] text-slate-400 uppercase font-mono block">Base</span>
+                    <span className="text-sm font-bold text-cyan-400 font-mono tabular-nums">
+                      {formatRupiah(product.basePrice)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {hasModifiers && (
+                      <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-slate-300 border border-white/10 font-medium">
+                        Custom
+                      </span>
+                    )}
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white group-hover:bg-rose-600 transition-colors">
+                      <Plus className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sold Out Overlay */}
+                {!product.isAvailable && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/85 backdrop-blur-[2px] p-2 text-center">
+                    <AlertCircle className="w-5 h-5 text-red-400 mb-1" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-400">
+                      Sold Out
+                    </span>
+                    <span className="text-[10px] text-stone-400">Out of Stock</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
