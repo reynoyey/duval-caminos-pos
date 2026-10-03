@@ -1,29 +1,34 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { OrderRecordDTO, ProductDTO } from "./types";
 
-const DEFAULT_SUPABASE_URL = "https://wafeaoqxmdxemhynvbjn.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_lyYoIWqGFTZl_gNuk9zr2A_08rDJiqt";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  DEFAULT_SUPABASE_ANON_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+// Only initialize Supabase if both URL and a valid signed JWT key are present
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl && supabaseAnonKey && supabaseAnonKey.startsWith("eyJ")
+);
 
 let client: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient | null {
   if (!isSupabaseConfigured) return null;
   if (!client && supabaseUrl && supabaseAnonKey) {
-    client = createClient(supabaseUrl, supabaseAnonKey, {
-      realtime: {
-        params: {
-          eventsPerSecond: 20,
+    try {
+      client = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        realtime: {
+          params: {
+            eventsPerSecond: 20,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      console.warn("Supabase client init safe catch:", err);
+      client = null;
+    }
   }
   return client;
 }
@@ -104,37 +109,47 @@ export function subscribeToOrders(onEvent: (event: OrderSyncEvent) => void) {
   }
 
   // 2. Supabase Realtime listener (cross-device)
-  const sb = getSupabaseClient();
-  if (sb) {
-    const channel = sb
-      .channel("pos-live-orders")
-      .on("broadcast", { event: "*" }, (payload) => {
-        if (payload.payload) {
-          onEvent(payload.payload as OrderSyncEvent);
-        }
-      })
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "Order" },
-        (payload) => {
-          if (payload.eventType === "UPDATE" && payload.new) {
-            onEvent({
-              type: "ORDER_STATUS_CHANGED",
-              orderId: (payload.new as any).id,
-              status: (payload.new as any).status,
-            });
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const channel = sb
+        .channel("pos-live-orders")
+        .on("broadcast", { event: "*" }, (payload) => {
+          if (payload.payload) {
+            onEvent(payload.payload as OrderSyncEvent);
           }
-        }
-      )
-      .subscribe();
+        })
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "Order" },
+          (payload) => {
+            if (payload.eventType === "UPDATE" && payload.new) {
+              onEvent({
+                type: "ORDER_STATUS_CHANGED",
+                orderId: (payload.new as any).id,
+                status: (payload.new as any).status,
+              });
+            }
+          }
+        )
+        .subscribe();
 
-    cleanups.push(() => {
-      sb.removeChannel(channel);
-    });
+      cleanups.push(() => {
+        try {
+          sb.removeChannel(channel);
+        } catch {}
+      });
+    }
+  } catch (e) {
+    console.warn("Supabase orders channel subscription error:", e);
   }
 
   return () => {
-    cleanups.forEach((fn) => fn());
+    cleanups.forEach((fn) => {
+      try {
+        fn();
+      } catch {}
+    });
   };
 }
 
@@ -156,19 +171,21 @@ export function broadcastMenuEvent(event: MenuSyncEvent) {
   }
 
   // 2. Supabase Realtime broadcast (cross-device sync)
-  const sb = getSupabaseClient();
-  if (sb) {
-    const channel = sb.channel("pos-live-menu");
-    channel
-      .send({
-        type: "broadcast",
-        event: event.type,
-        payload: event,
-      })
-      .catch((e) => {
-        console.warn("Supabase realtime broadcast menu error", e);
-      });
-  }
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const channel = sb.channel("pos-live-menu");
+      channel
+        .send({
+          type: "broadcast",
+          event: event.type,
+          payload: event,
+        })
+        .catch((e) => {
+          console.warn("Supabase realtime broadcast menu error", e);
+        });
+    }
+  } catch {}
 }
 
 /** Listen to menu changes from other devices in real-time */
@@ -177,37 +194,51 @@ export function subscribeToMenu(onEvent: (event: MenuSyncEvent) => void) {
 
   // 1. Local BroadcastChannel listener
   if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-    const localChannel = new BroadcastChannel(LOCAL_MENU_CHANNEL);
-    const handleMessage = (evt: MessageEvent<MenuSyncEvent>) => {
-      if (evt.data && evt.data.type) {
-        onEvent(evt.data);
-      }
-    };
-    localChannel.addEventListener("message", handleMessage);
-    cleanups.push(() => {
-      localChannel.removeEventListener("message", handleMessage);
-      localChannel.close();
-    });
+    try {
+      const localChannel = new BroadcastChannel(LOCAL_MENU_CHANNEL);
+      const handleMessage = (evt: MessageEvent<MenuSyncEvent>) => {
+        if (evt.data && evt.data.type) {
+          onEvent(evt.data);
+        }
+      };
+      localChannel.addEventListener("message", handleMessage);
+      cleanups.push(() => {
+        try {
+          localChannel.removeEventListener("message", handleMessage);
+          localChannel.close();
+        } catch {}
+      });
+    } catch {}
   }
 
   // 2. Supabase Realtime listener (cross-device)
-  const sb = getSupabaseClient();
-  if (sb) {
-    const channel = sb
-      .channel("pos-live-menu")
-      .on("broadcast", { event: "*" }, (payload) => {
-        if (payload.payload) {
-          onEvent(payload.payload as MenuSyncEvent);
-        }
-      })
-      .subscribe();
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const channel = sb
+        .channel("pos-live-menu")
+        .on("broadcast", { event: "*" }, (payload) => {
+          if (payload.payload) {
+            onEvent(payload.payload as MenuSyncEvent);
+          }
+        })
+        .subscribe();
 
-    cleanups.push(() => {
-      sb.removeChannel(channel);
-    });
+      cleanups.push(() => {
+        try {
+          sb.removeChannel(channel);
+        } catch {}
+      });
+    }
+  } catch (e) {
+    console.warn("Supabase menu channel subscription error:", e);
   }
 
   return () => {
-    cleanups.forEach((fn) => fn());
+    cleanups.forEach((fn) => {
+      try {
+        fn();
+      } catch {}
+    });
   };
 }

@@ -85,9 +85,20 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       }
     });
 
+    const interval = setInterval(() => {
+      fetchLatestCatalog().catch(() => null);
+    }, 4000);
+
+    const onFocus = () => {
+      fetchLatestCatalog().catch(() => null);
+    };
+    window.addEventListener("focus", onFocus);
+
     return () => {
-      unsubMenu();
-      unsubOrders();
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      try { unsubMenu?.(); } catch {}
+      try { unsubOrders?.(); } catch {}
     };
   }, [initialCatalog, hydrateCatalog, fetchLatestCatalog, applyRemoteMenuEvent, addOrder, updateOrderStatus]);
 
