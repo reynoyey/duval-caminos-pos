@@ -186,6 +186,9 @@ model Order {
   items    OrderItem[]
   payments Payment[]
 
+  isCollected    Boolean      @default(false)
+  collectedAt    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

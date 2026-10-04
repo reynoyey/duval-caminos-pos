@@ -89,6 +89,7 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
   const markCollected = useOrdersStore((s) => s.markCollected);
   const restoreToPickup = useOrdersStore((s) => s.restoreToPickup);
   const cancelOrder = useOrdersStore((s) => s.cancelOrder);
+  const resetToInitialOrders = useOrdersStore((s) => s.resetToInitialOrders);
   const fetchLatestOrders = useOrdersStore((s) => s.fetchLatestOrders);
 
   const [viewMode, setViewMode] = useState<KdsViewMode>("BARISTA_KDS");
@@ -127,11 +128,14 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
         if (event.status === "COMPLETED" && !event.isCollected) {
           playOrderReadyChime();
         }
+      } else if (event.type === "ALL_ORDERS_CLEARED") {
+        resetToInitialOrders(event.resetTimestamp);
+        toast.info("Semua antrean order telah di-reset untuk hari baru!");
       }
     });
 
     return () => unsubscribe();
-  }, [addOrder, updateOrderStatus]);
+  }, [addOrder, updateOrderStatus, resetToInitialOrders]);
 
   // Fullscreen toggle handler
   const toggleFullscreen = () => {
@@ -189,7 +193,12 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
     () =>
       filteredOrders
         .filter((o) => o.status === "PROCESSING")
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+        .sort((a, b) => {
+          if (a.queueNumber && b.queueNumber && a.queueNumber !== b.queueNumber) {
+            return a.queueNumber - b.queueNumber;
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }),
     [filteredOrders]
   );
 

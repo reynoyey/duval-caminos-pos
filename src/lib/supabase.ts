@@ -43,7 +43,8 @@ export function getSupabaseClient(): SupabaseClient | null {
 export type OrderSyncEvent =
   | { type: "ORDER_CREATED"; order: OrderRecordDTO }
   | { type: "ORDER_STATUS_CHANGED"; orderId: string; status: OrderRecordDTO["status"]; isCollected?: boolean }
-  | { type: "ORDER_DELETED"; orderId: string };
+  | { type: "ORDER_DELETED"; orderId: string }
+  | { type: "ALL_ORDERS_CLEARED"; resetTimestamp: number };
 
 export type MenuSyncEvent =
   | { type: "PRODUCT_ADDED"; product: ProductDTO }

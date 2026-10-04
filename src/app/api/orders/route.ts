@@ -17,6 +17,24 @@ import {
   getLastResetTimestamp,
 } from "@/lib/orders-cache";
 
+/** Helper to ensure default category exists before creating products */
+async function ensureCategoryExists(prisma: any) {
+  try {
+    await prisma.category.upsert({
+      where: { slug: "signature" },
+      update: {},
+      create: {
+        id: "cat-sig",
+        name: "Signature Coffee",
+        slug: "signature",
+        sortOrder: 0,
+      },
+    });
+  } catch (err) {
+    console.warn("Category upsert safe catch:", err);
+  }
+}
+
 /** Helper to ensure shift exists before attaching orders */
 async function ensureShiftExists(prisma: any, shiftId: string, cashierName?: string) {
   try {
@@ -37,6 +55,7 @@ async function ensureShiftExists(prisma: any, shiftId: string, cashierName?: str
 
 /** Helper to ensure products exist before creating order items */
 async function ensureProductsExist(prisma: any, items: any[]) {
+  await ensureCategoryExists(prisma);
   for (const item of items) {
     if (item.productId) {
       try {
@@ -90,6 +109,8 @@ export async function GET() {
               customerName: o.customerName,
               tableNumber: o.tableNumber,
               status: o.status,
+              isCollected: Boolean(o.isCollected),
+              collectedAt: o.collectedAt ? new Date(o.collectedAt).toISOString() : undefined,
               subtotal: o.subtotal,
               discountType: o.discountType,
               discountValue: o.discountValue,
@@ -152,13 +173,25 @@ export async function GET() {
     }
     for (const mem of getInMemoryOrders()) {
       const existing = orderMap.get(mem.id);
-      if (!existing || (mem.updatedAt && mem.updatedAt > (existing.updatedAt || existing.createdAt))) {
+      if (!existing) {
         orderMap.set(mem.id, mem);
+      } else {
+        const memTime = mem.updatedAt ? new Date(mem.updatedAt).getTime() : new Date(mem.createdAt).getTime();
+        const existTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : new Date(existing.createdAt).getTime();
+        if (memTime >= existTime) {
+          orderMap.set(mem.id, {
+            ...existing,
+            ...mem,
+            isCollected: mem.isCollected !== undefined ? mem.isCollected : existing.isCollected,
+            collectedAt: mem.collectedAt || existing.collectedAt,
+          });
+        }
       }
     }
 
+    const resetCutoff = getLastResetTimestamp();
     const merged = Array.from(orderMap.values())
-      .filter((o) => !getDeletedOrderIds().includes(o.id))
+      .filter((o) => !getDeletedOrderIds().includes(o.id) && (resetCutoff === 0 || new Date(o.createdAt).getTime() > resetCutoff))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json({
@@ -192,6 +225,12 @@ export async function POST(req: Request) {
     if (isDirectRecord) {
       const orderRecord = rawBody as OrderRecordDTO;
 
+      // Reject orders predating reset
+      const resetTime = getLastResetTimestamp();
+      if (resetTime > 0 && orderRecord.createdAt && new Date(orderRecord.createdAt).getTime() <= resetTime) {
+        return NextResponse.json({ success: true, ignored: true, message: "Order predates reset" });
+      }
+
       // 1. Immediately store in in-memory server cache for instant multi-device sync
       addInMemoryOrder(orderRecord);
 
@@ -207,6 +246,8 @@ export async function POST(req: Request) {
               where: { id: orderRecord.id },
               update: {
                 status: orderRecord.status,
+                isCollected: Boolean(orderRecord.isCollected),
+                collectedAt: orderRecord.collectedAt ? new Date(orderRecord.collectedAt) : null,
                 updatedAt: new Date(),
               },
               create: {
@@ -217,6 +258,8 @@ export async function POST(req: Request) {
                 customerName: orderRecord.customerName,
                 tableNumber: orderRecord.tableNumber || null,
                 status: orderRecord.status || "PROCESSING",
+                isCollected: Boolean(orderRecord.isCollected),
+                collectedAt: orderRecord.collectedAt ? new Date(orderRecord.collectedAt) : null,
                 subtotal: orderRecord.subtotal,
                 discountType: orderRecord.discountType || "NONE",
                 discountValue: orderRecord.discountValue || 0,
@@ -336,6 +379,10 @@ export async function PATCH(req: Request) {
         if (prisma) {
           const updateData: any = { updatedAt: new Date() };
           if (status) updateData.status = status;
+          if (isCollected !== undefined) {
+            updateData.isCollected = Boolean(isCollected);
+            updateData.collectedAt = isCollected ? new Date() : null;
+          }
           await prisma.order.update({
             where: { id: orderId },
             data: updateData,
@@ -356,14 +403,18 @@ export async function PATCH(req: Request) {
 /** DELETE /api/orders — Reset orders or delete single order */
 export async function DELETE(req: Request) {
   try {
-    const { orderId, resetAll } = await req.json().catch(() => ({}));
+    const { orderId, resetAll, resetTimestamp } = await req.json().catch(() => ({}));
 
     if (resetAll) {
-      resetInMemoryOrders();
+      const now = resetTimestamp || Date.now();
+      resetInMemoryOrders(now);
       if (process.env.DATABASE_URL) {
         try {
           const { prisma } = await import("@/lib/prisma");
           if (prisma) {
+            await prisma.orderItemModifier.deleteMany({});
+            await prisma.orderItem.deleteMany({});
+            await prisma.payment.deleteMany({});
             await prisma.order.deleteMany({});
           }
         } catch (dbErr) {
@@ -383,6 +434,15 @@ export async function DELETE(req: Request) {
         try {
           const { prisma } = await import("@/lib/prisma");
           if (prisma) {
+            await prisma.orderItemModifier.deleteMany({
+              where: { orderItem: { orderId } },
+            });
+            await prisma.orderItem.deleteMany({
+              where: { orderId },
+            });
+            await prisma.payment.deleteMany({
+              where: { orderId },
+            });
             await prisma.order.delete({ where: { id: orderId } });
           }
         } catch (dbErr) {

@@ -27,7 +27,7 @@ interface OrdersState {
   cancelOrder: (orderId: string) => void;
   deleteOrderRecord: (orderId: string) => void;
   clearAllOrders: () => void;
-  resetToInitialOrders: () => void;
+  resetToInitialOrders: (resetTimestamp?: number) => void;
 
   // Realtime multi-device cloud synchronization
   syncRemoteOrders: (remoteOrders: OrderRecordDTO[], remoteResetTimestamp?: number, remoteDeletedIds?: string[]) => void;
@@ -137,15 +137,23 @@ export const useOrdersStore = create<OrdersState>()(
       clearAllOrders: () => {
         const now = Date.now();
         set({ orders: [], dailyOrderSequence: 0, lastResetTimestamp: now });
+        try {
+          localStorage.removeItem("duval-pos-orders-v4");
+        } catch {}
+        broadcastOrderEvent({ type: "ALL_ORDERS_CLEARED", resetTimestamp: now });
         fetch("/api/orders", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resetAll: true }),
+          body: JSON.stringify({ resetAll: true, resetTimestamp: now }),
         }).catch((err) => console.warn("Cloud clearAllOrders error:", err));
       },
 
-      resetToInitialOrders: () => {
-        set({ orders: [], dailyOrderSequence: 0 });
+      resetToInitialOrders: (resetTimestamp?: number) => {
+        const now = resetTimestamp || Date.now();
+        set({ orders: [], dailyOrderSequence: 0, lastResetTimestamp: now });
+        try {
+          localStorage.removeItem("duval-pos-orders-v4");
+        } catch {}
       },
 
       // Merge remote orders intelligently without ever dropping valid local orders
@@ -153,39 +161,47 @@ export const useOrdersStore = create<OrdersState>()(
         if (!remoteOrders || !Array.isArray(remoteOrders)) return;
 
         set((state) => {
-          // 1. If another device performed an authorized Reset Harian, honor the reset
-          if (remoteResetTimestamp && remoteResetTimestamp > (state.lastResetTimestamp || 0)) {
-            return {
-              orders: [],
-              dailyOrderSequence: 0,
-              lastResetTimestamp: remoteResetTimestamp,
-            };
-          }
+          const localReset = state.lastResetTimestamp || 0;
+          const incomingReset = remoteResetTimestamp || 0;
+          const effectiveReset = Math.max(localReset, incomingReset);
 
           const deletedSet = new Set(remoteDeletedIds || []);
 
-          // 2. Start by keeping ALL existing local orders (unless explicitly deleted)
+          // 1. Filter existing local orders: drop deleted and anything created before effectiveReset
           const map = new Map<string, OrderRecordDTO>();
           for (const lo of state.orders) {
-            if (!deletedSet.has(lo.id)) {
-              map.set(lo.id, lo);
-            }
+            if (deletedSet.has(lo.id)) continue;
+            const loCreated = new Date(lo.createdAt).getTime();
+            if (effectiveReset > 0 && loCreated <= effectiveReset) continue;
+            map.set(lo.id, lo);
           }
 
-          // 3. Merge in remote orders from other devices
+          // 2. Merge in remote orders
           for (const ro of remoteOrders) {
             if (deletedSet.has(ro.id)) continue;
+            const roCreated = new Date(ro.createdAt).getTime();
+            if (effectiveReset > 0 && roCreated <= effectiveReset) continue;
 
             const existing = map.get(ro.id);
             if (!existing) {
-              // New order placed on another device -> Add it immediately!
               map.set(ro.id, ro);
             } else {
-              // Existing order -> update status if changed or if remote is newer
-              const isStatusChanged = ro.status !== existing.status;
-              const isRemoteNewer = ro.updatedAt && (!existing.updatedAt || ro.updatedAt >= existing.updatedAt);
-              if (isStatusChanged || isRemoteNewer) {
-                map.set(ro.id, { ...existing, ...ro });
+              // CRITICAL: Only allow remote to overwrite if remote is strictly NEWER!
+              // NEVER let an older remote status (e.g. PROCESSING) revert a newer local status (e.g. COMPLETED)!
+              const localTime = existing.updatedAt
+                ? new Date(existing.updatedAt).getTime()
+                : new Date(existing.createdAt).getTime();
+              const remoteTime = ro.updatedAt
+                ? new Date(ro.updatedAt).getTime()
+                : new Date(ro.createdAt).getTime();
+
+              if (remoteTime > localTime) {
+                map.set(ro.id, {
+                  ...existing,
+                  ...ro,
+                  isCollected: ro.isCollected !== undefined ? ro.isCollected : existing.isCollected,
+                  collectedAt: ro.collectedAt || existing.collectedAt,
+                });
               }
             }
           }
@@ -197,6 +213,7 @@ export const useOrdersStore = create<OrdersState>()(
           // Skip state update if nothing has changed
           if (
             merged.length === state.orders.length &&
+            effectiveReset === state.lastResetTimestamp &&
             merged.every((m, idx) => {
               const prev = state.orders[idx];
               return (
@@ -216,6 +233,7 @@ export const useOrdersStore = create<OrdersState>()(
           return {
             orders: merged,
             dailyOrderSequence: Math.max(state.dailyOrderSequence || 0, maxSeq),
+            lastResetTimestamp: effectiveReset,
           };
         });
       },
@@ -229,9 +247,11 @@ export const useOrdersStore = create<OrdersState>()(
           if (data && Array.isArray(data.orders)) {
             get().syncRemoteOrders(data.orders, data.resetTimestamp, data.deletedOrderIds);
 
-            // Two-way self-healing: if server has fewer orders than client and wasn't reset,
-            // push any missing local active orders to the server so other devices get them!
-            const currentOrders = get().orders;
+            // Two-way self-healing: ONLY push missing local active orders if they are NEWER than lastResetTimestamp
+            const cutoff = get().lastResetTimestamp || 0;
+            const currentOrders = get().orders.filter(
+              (o) => (cutoff === 0 || new Date(o.createdAt).getTime() > cutoff)
+            );
             if (currentOrders.length > 0 && data.orders.length < currentOrders.length) {
               const serverOrderIds = new Set(data.orders.map((o: any) => o.id));
               const missingOnServer = currentOrders.filter((o) => !serverOrderIds.has(o.id));
