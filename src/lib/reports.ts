@@ -1,5 +1,6 @@
 import { jakartaDayRange } from "./time";
 import { summarize, type GenericReportOrder, type ShiftSummary } from "./summary";
+import { getInMemoryOrders } from "./orders-cache";
 
 export * from "./summary";
 
@@ -15,7 +16,6 @@ export type ReportScope =
 export async function loadReport(scope: ReportScope) {
   if (!process.env.DATABASE_URL) {
     try {
-      const { getInMemoryOrders } = await import("@/app/api/orders/route");
       const live = getInMemoryOrders();
       if (live && live.length > 0) {
         const formattedOrders: GenericReportOrder[] = live.map((o) => ({
@@ -85,7 +85,6 @@ export async function loadReport(scope: ReportScope) {
   } catch (err) {
     console.warn("Database report load failed, checking live in-memory orders:", err);
     try {
-      const { getInMemoryOrders } = await import("@/app/api/orders/route");
       const live = getInMemoryOrders();
       if (live && live.length > 0) {
         const formattedOrders: GenericReportOrder[] = live.map((o) => ({

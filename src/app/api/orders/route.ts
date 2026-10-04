@@ -7,14 +7,15 @@ import type { DiscountInput, OrderRecordDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-// In-memory cache for instant cross-device sync across all clients (iPad, Laptop, Phone)
-let inMemoryOrders: OrderRecordDTO[] = [];
-let deletedOrderIds: string[] = [];
-let lastResetTimestamp: number = 0;
-
-export function getInMemoryOrders(): OrderRecordDTO[] {
-  return inMemoryOrders.filter((o) => !deletedOrderIds.includes(o.id));
-}
+import {
+  getInMemoryOrders,
+  addInMemoryOrder,
+  updateInMemoryOrderStatus,
+  deleteInMemoryOrder,
+  resetInMemoryOrders,
+  getDeletedOrderIds,
+  getLastResetTimestamp,
+} from "@/lib/orders-cache";
 
 /** Helper to ensure shift exists before attaching orders */
 async function ensureShiftExists(prisma: any, shiftId: string, cashierName?: string) {
@@ -149,7 +150,7 @@ export async function GET() {
     for (const ord of dbOrdersMapped) {
       orderMap.set(ord.id, ord);
     }
-    for (const mem of inMemoryOrders) {
+    for (const mem of getInMemoryOrders()) {
       const existing = orderMap.get(mem.id);
       if (!existing || (mem.updatedAt && mem.updatedAt > (existing.updatedAt || existing.createdAt))) {
         orderMap.set(mem.id, mem);
@@ -157,22 +158,22 @@ export async function GET() {
     }
 
     const merged = Array.from(orderMap.values())
-      .filter((o) => !deletedOrderIds.includes(o.id))
+      .filter((o) => !getDeletedOrderIds().includes(o.id))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json({
       success: true,
       orders: merged,
-      resetTimestamp: lastResetTimestamp,
-      deletedOrderIds: deletedOrderIds.slice(-50),
+      resetTimestamp: getLastResetTimestamp(),
+      deletedOrderIds: getDeletedOrderIds().slice(-50),
     });
   } catch (error) {
     console.error("[GET /api/orders]", error);
     return NextResponse.json({
       success: true,
-      orders: inMemoryOrders.filter((o) => !deletedOrderIds.includes(o.id)),
-      resetTimestamp: lastResetTimestamp,
-      deletedOrderIds: deletedOrderIds.slice(-50),
+      orders: getInMemoryOrders(),
+      resetTimestamp: getLastResetTimestamp(),
+      deletedOrderIds: getDeletedOrderIds().slice(-50),
     });
   }
 }
@@ -191,11 +192,8 @@ export async function POST(req: Request) {
     if (isDirectRecord) {
       const orderRecord = rawBody as OrderRecordDTO;
 
-      // Ensure not marked deleted if re-created/synced
-      deletedOrderIds = deletedOrderIds.filter((id) => id !== orderRecord.id);
-
       // 1. Immediately store in in-memory server cache for instant multi-device sync
-      inMemoryOrders = [orderRecord, ...inMemoryOrders.filter((o) => o.id !== orderRecord.id)].slice(0, 200);
+      addInMemoryOrder(orderRecord);
 
       // 2. Persist to PostgreSQL via Prisma if configured
       if (process.env.DATABASE_URL) {
@@ -308,7 +306,7 @@ export async function POST(req: Request) {
       },
     };
 
-    inMemoryOrders = [fallbackRecord, ...inMemoryOrders].slice(0, 200);
+    addInMemoryOrder(fallbackRecord);
 
     return NextResponse.json({
       success: true,
@@ -329,17 +327,7 @@ export async function PATCH(req: Request) {
     }
 
     // 1. Update in-memory cache
-    const nowIso = new Date().toISOString();
-    inMemoryOrders = inMemoryOrders.map((o) =>
-      o.id === orderId
-        ? {
-            ...o,
-            ...(status ? { status } : {}),
-            ...(isCollected !== undefined ? { isCollected } : {}),
-            updatedAt: nowIso,
-          }
-        : o
-    );
+    updateInMemoryOrderStatus(orderId, status, isCollected);
 
     // 2. Update PostgreSQL via Prisma if configured
     if (process.env.DATABASE_URL) {
@@ -371,9 +359,7 @@ export async function DELETE(req: Request) {
     const { orderId, resetAll } = await req.json().catch(() => ({}));
 
     if (resetAll) {
-      inMemoryOrders = [];
-      lastResetTimestamp = Date.now();
-      deletedOrderIds = [];
+      resetInMemoryOrders();
       if (process.env.DATABASE_URL) {
         try {
           const { prisma } = await import("@/lib/prisma");
@@ -387,15 +373,12 @@ export async function DELETE(req: Request) {
       return NextResponse.json({
         success: true,
         message: "All orders reset",
-        resetTimestamp: lastResetTimestamp,
+        resetTimestamp: getLastResetTimestamp(),
       });
     }
 
     if (orderId) {
-      inMemoryOrders = inMemoryOrders.filter((o) => o.id !== orderId);
-      if (!deletedOrderIds.includes(orderId)) {
-        deletedOrderIds.push(orderId);
-      }
+      deleteInMemoryOrder(orderId);
       if (process.env.DATABASE_URL) {
         try {
           const { prisma } = await import("@/lib/prisma");
