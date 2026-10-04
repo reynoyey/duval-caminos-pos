@@ -196,7 +196,7 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
             type="button"
             onClick={onLockTerminal}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-medium transition-all shadow-sm"
-            title="Kunci Layar Terminal POS (PIN: 0000)"
+            title="Kunci Layar Terminal POS"
           >
             <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="hidden sm:inline">Kunci</span>

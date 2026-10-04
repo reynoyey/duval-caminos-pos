@@ -129,7 +129,7 @@ export function PinLockScreen({ onUnlock }: PinLockScreenProps) {
           </p>
           <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-300">
             <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Masukkan Password Akses: <strong>0000</strong></span>
+            <span>Masukkan PIN Akses Kasir</span>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ export function PinLockScreen({ onUnlock }: PinLockScreenProps) {
 
         {/* Footer info */}
         <div className="mt-6 text-center text-[10px] text-slate-500">
-          Duval Caminos Coffee System • PIN Kasir Standard: 0000
+          Duval Caminos Coffee System • Terminal Kasir Terproteksi
         </div>
       </motion.div>
     </div>
