@@ -12,6 +12,7 @@ interface OrdersState {
   dailyOrderSequence: number;
   filter: OrderFilter;
   searchQuery: string;
+  lastResetTimestamp: number;
 
   setFilter: (filter: OrderFilter) => void;
   setSearchQuery: (query: string) => void;
@@ -27,7 +28,7 @@ interface OrdersState {
   resetToInitialOrders: () => void;
 
   // Realtime multi-device cloud synchronization
-  syncRemoteOrders: (remoteOrders: OrderRecordDTO[]) => void;
+  syncRemoteOrders: (remoteOrders: OrderRecordDTO[], remoteResetTimestamp?: number, remoteDeletedIds?: string[]) => void;
   fetchLatestOrders: () => Promise<void>;
 }
 
@@ -38,6 +39,7 @@ export const useOrdersStore = create<OrdersState>()(
       dailyOrderSequence: 0,
       filter: "ALL",
       searchQuery: "",
+      lastResetTimestamp: 0,
 
       setFilter: (filter) => set({ filter }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -116,7 +118,8 @@ export const useOrdersStore = create<OrdersState>()(
       },
 
       clearAllOrders: () => {
-        set({ orders: [], dailyOrderSequence: 0 });
+        const now = Date.now();
+        set({ orders: [], dailyOrderSequence: 0, lastResetTimestamp: now });
         fetch("/api/orders", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -128,44 +131,49 @@ export const useOrdersStore = create<OrdersState>()(
         set({ orders: [], dailyOrderSequence: 0 });
       },
 
-      // Merge remote orders intelligently without overriding optimistic updates
-      syncRemoteOrders: (remoteOrders) => {
+      // Merge remote orders intelligently without ever dropping valid local orders
+      syncRemoteOrders: (remoteOrders, remoteResetTimestamp, remoteDeletedIds) => {
         if (!remoteOrders || !Array.isArray(remoteOrders)) return;
 
         set((state) => {
-          const now = Date.now();
-          const RECENT_THRESHOLD_MS = 15000; // 15s grace period for in-flight local additions
-
-          const remoteMap = new Map<string, OrderRecordDTO>();
-          for (const ro of remoteOrders) {
-            remoteMap.set(ro.id, ro);
+          // 1. If another device performed an authorized Reset Harian, honor the reset
+          if (remoteResetTimestamp && remoteResetTimestamp > (state.lastResetTimestamp || 0)) {
+            return {
+              orders: [],
+              dailyOrderSequence: 0,
+              lastResetTimestamp: remoteResetTimestamp,
+            };
           }
 
-          // Build merged list
-          const mergedMap = new Map<string, OrderRecordDTO>();
+          const deletedSet = new Set(remoteDeletedIds || []);
 
-          // 1. All remote orders from server
-          for (const ro of remoteOrders) {
-            mergedMap.set(ro.id, ro);
-          }
-
-          // 2. Keep locally created orders that are recent and still in-flight
+          // 2. Start by keeping ALL existing local orders (unless explicitly deleted)
+          const map = new Map<string, OrderRecordDTO>();
           for (const lo of state.orders) {
-            if (!remoteMap.has(lo.id)) {
-              const orderAge = now - new Date(lo.createdAt).getTime();
-              if (orderAge < RECENT_THRESHOLD_MS) {
-                mergedMap.set(lo.id, lo);
-              }
+            if (!deletedSet.has(lo.id)) {
+              map.set(lo.id, lo);
+            }
+          }
+
+          // 3. Merge in remote orders from other devices
+          for (const ro of remoteOrders) {
+            if (deletedSet.has(ro.id)) continue;
+
+            const existing = map.get(ro.id);
+            if (!existing) {
+              // New order placed on another device -> Add it immediately!
+              map.set(ro.id, ro);
             } else {
-              // If local copy has a newer updatedAt, preserve local version
-              const ro = remoteMap.get(lo.id)!;
-              if (lo.updatedAt && ro.updatedAt && lo.updatedAt > ro.updatedAt) {
-                mergedMap.set(lo.id, lo);
+              // Existing order -> update status if changed or if remote is newer
+              const isStatusChanged = ro.status !== existing.status;
+              const isRemoteNewer = ro.updatedAt && (!existing.updatedAt || ro.updatedAt >= existing.updatedAt);
+              if (isStatusChanged || isRemoteNewer) {
+                map.set(ro.id, { ...existing, ...ro });
               }
             }
           }
 
-          const merged = Array.from(mergedMap.values()).sort(
+          const merged = Array.from(map.values()).sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
 
@@ -189,14 +197,29 @@ export const useOrdersStore = create<OrdersState>()(
         });
       },
 
-      // Fetch latest orders from the cloud API
+      // Fetch latest orders from the cloud API with two-way self-healing
       fetchLatestOrders: async () => {
         try {
           const res = await fetch("/api/orders", { cache: "no-store" });
           if (!res.ok) return;
           const data = await res.json();
           if (data && Array.isArray(data.orders)) {
-            get().syncRemoteOrders(data.orders);
+            get().syncRemoteOrders(data.orders, data.resetTimestamp, data.deletedOrderIds);
+
+            // Two-way self-healing: if server has fewer orders than client and wasn't reset,
+            // push any missing local active orders to the server so other devices get them!
+            const currentOrders = get().orders;
+            if (currentOrders.length > 0 && data.orders.length < currentOrders.length) {
+              const serverOrderIds = new Set(data.orders.map((o: any) => o.id));
+              const missingOnServer = currentOrders.filter((o) => !serverOrderIds.has(o.id));
+              for (const missing of missingOnServer) {
+                fetch("/api/orders", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(missing),
+                }).catch(() => null);
+              }
+            }
           }
         } catch (err) {
           console.warn("fetchLatestOrders error:", err);
@@ -209,6 +232,7 @@ export const useOrdersStore = create<OrdersState>()(
       partialize: (s) => ({
         orders: s.orders,
         dailyOrderSequence: s.dailyOrderSequence,
+        lastResetTimestamp: s.lastResetTimestamp,
       }),
     }
   )

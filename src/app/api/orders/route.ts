@@ -9,6 +9,8 @@ export const runtime = "nodejs";
 
 // In-memory cache for instant cross-device sync across all clients (iPad, Laptop, Phone)
 let inMemoryOrders: OrderRecordDTO[] = [];
+let deletedOrderIds: string[] = [];
+let lastResetTimestamp: number = 0;
 
 /** Helper to ensure shift exists before attaching orders */
 async function ensureShiftExists(prisma: any, shiftId: string, cashierName?: string) {
@@ -150,14 +152,24 @@ export async function GET() {
       }
     }
 
-    const merged = Array.from(orderMap.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const merged = Array.from(orderMap.values())
+      .filter((o) => !deletedOrderIds.includes(o.id))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return NextResponse.json({ success: true, orders: merged });
+    return NextResponse.json({
+      success: true,
+      orders: merged,
+      resetTimestamp: lastResetTimestamp,
+      deletedOrderIds: deletedOrderIds.slice(-50),
+    });
   } catch (error) {
     console.error("[GET /api/orders]", error);
-    return NextResponse.json({ success: true, orders: inMemoryOrders });
+    return NextResponse.json({
+      success: true,
+      orders: inMemoryOrders.filter((o) => !deletedOrderIds.includes(o.id)),
+      resetTimestamp: lastResetTimestamp,
+      deletedOrderIds: deletedOrderIds.slice(-50),
+    });
   }
 }
 
@@ -174,6 +186,9 @@ export async function POST(req: Request) {
 
     if (isDirectRecord) {
       const orderRecord = rawBody as OrderRecordDTO;
+
+      // Ensure not marked deleted if re-created/synced
+      deletedOrderIds = deletedOrderIds.filter((id) => id !== orderRecord.id);
 
       // 1. Immediately store in in-memory server cache for instant multi-device sync
       inMemoryOrders = [orderRecord, ...inMemoryOrders.filter((o) => o.id !== orderRecord.id)].slice(0, 200);
@@ -344,6 +359,8 @@ export async function DELETE(req: Request) {
 
     if (resetAll) {
       inMemoryOrders = [];
+      lastResetTimestamp = Date.now();
+      deletedOrderIds = [];
       if (process.env.DATABASE_URL) {
         try {
           const { prisma } = await import("@/lib/prisma");
@@ -354,11 +371,18 @@ export async function DELETE(req: Request) {
           console.warn("DB clear orders safe catch:", dbErr);
         }
       }
-      return NextResponse.json({ success: true, message: "All orders reset" });
+      return NextResponse.json({
+        success: true,
+        message: "All orders reset",
+        resetTimestamp: lastResetTimestamp,
+      });
     }
 
     if (orderId) {
       inMemoryOrders = inMemoryOrders.filter((o) => o.id !== orderId);
+      if (!deletedOrderIds.includes(orderId)) {
+        deletedOrderIds.push(orderId);
+      }
       if (process.env.DATABASE_URL) {
         try {
           const { prisma } = await import("@/lib/prisma");
