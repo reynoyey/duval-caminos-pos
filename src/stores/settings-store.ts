@@ -21,7 +21,7 @@ interface SettingsState {
 export const DEFAULT_SETTINGS = {
   cashierName: "Alex Rivera",
   storeName: "Duval Caminos Coffee",
-  storeTagline: "South Beach Counter POS & Barista Tracker",
+  storeTagline: "Specialty Coffee POS & Kitchen Display",
   storeAddress: "Jl. Kebon Jeruk Raya No. 27, Kemanggisan, Palmerah, Jakarta Barat",
   logoUrl: "/logo.jpg",
 };

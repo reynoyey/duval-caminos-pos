@@ -12,6 +12,10 @@ let inMemoryOrders: OrderRecordDTO[] = [];
 let deletedOrderIds: string[] = [];
 let lastResetTimestamp: number = 0;
 
+export function getInMemoryOrders(): OrderRecordDTO[] {
+  return inMemoryOrders.filter((o) => !deletedOrderIds.includes(o.id));
+}
+
 /** Helper to ensure shift exists before attaching orders */
 async function ensureShiftExists(prisma: any, shiftId: string, cashierName?: string) {
   try {
@@ -319,15 +323,22 @@ export async function POST(req: Request) {
 /** PATCH /api/orders — update order status (e.g. mark as COMPLETED / READY) */
 export async function PATCH(req: Request) {
   try {
-    const { orderId, status } = await req.json().catch(() => ({}));
-    if (!orderId || !status) {
-      return NextResponse.json({ error: "orderId and status are required" }, { status: 400 });
+    const { orderId, status, isCollected } = await req.json().catch(() => ({}));
+    if (!orderId) {
+      return NextResponse.json({ error: "orderId is required" }, { status: 400 });
     }
 
     // 1. Update in-memory cache
     const nowIso = new Date().toISOString();
     inMemoryOrders = inMemoryOrders.map((o) =>
-      o.id === orderId ? { ...o, status, updatedAt: nowIso } : o
+      o.id === orderId
+        ? {
+            ...o,
+            ...(status ? { status } : {}),
+            ...(isCollected !== undefined ? { isCollected } : {}),
+            updatedAt: nowIso,
+          }
+        : o
     );
 
     // 2. Update PostgreSQL via Prisma if configured
@@ -335,9 +346,11 @@ export async function PATCH(req: Request) {
       try {
         const { prisma } = await import("@/lib/prisma");
         if (prisma) {
+          const updateData: any = { updatedAt: new Date() };
+          if (status) updateData.status = status;
           await prisma.order.update({
             where: { id: orderId },
-            data: { status, updatedAt: new Date() },
+            data: updateData,
           });
         }
       } catch (dbErr) {
@@ -345,7 +358,7 @@ export async function PATCH(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, orderId, status });
+    return NextResponse.json({ success: true, orderId, status, isCollected });
   } catch (error) {
     console.error("[PATCH /api/orders]", error);
     return NextResponse.json({ error: "Failed to update order status" }, { status: 500 });

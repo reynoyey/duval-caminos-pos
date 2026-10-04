@@ -52,20 +52,39 @@ export interface GenericReportOrder {
       priceDelta: number;
     }[];
   }[];
-  payments: {
+  payments?: {
     method: string;
     amount: number;
     tendered: number;
     change: number;
     reference?: string | null;
   }[];
+  payment?: {
+    method: string;
+    amount: number;
+    tendered: number;
+    change: number;
+    reference?: string | null;
+  };
+  isCollected?: boolean;
 }
 
 export function summarize(orders: any[], openingCash = 0): ShiftSummary {
   const settled = orders.filter((o) => o.status !== "CANCELLED" && o.status !== "VOID");
   const sum = (fn: (o: any) => number) => settled.reduce((s, o) => s + fn(o), 0);
+
+  const getOrderPayments = (o: any): any[] => {
+    if (Array.isArray(o.payments) && o.payments.length > 0) return o.payments;
+    if (o.payment) return [o.payment];
+    return [];
+  };
+
   const byMethod = (m: string) =>
-    sum((o) => (o.payments || []).filter((p: any) => p.method === m).reduce((s: number, p: any) => s + p.amount, 0));
+    sum((o) =>
+      getOrderPayments(o)
+        .filter((p: any) => p && p.method === m)
+        .reduce((s: number, p: any) => s + (Number(p.amount) || Number(o.total) || 0), 0)
+    );
 
   const totalSales = sum((o) => o.total);
   const cashSales = byMethod("CASH");

@@ -42,7 +42,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 
 export type OrderSyncEvent =
   | { type: "ORDER_CREATED"; order: OrderRecordDTO }
-  | { type: "ORDER_STATUS_CHANGED"; orderId: string; status: OrderRecordDTO["status"] }
+  | { type: "ORDER_STATUS_CHANGED"; orderId: string; status: OrderRecordDTO["status"]; isCollected?: boolean }
   | { type: "ORDER_DELETED"; orderId: string };
 
 export type MenuSyncEvent =
@@ -83,7 +83,7 @@ export function broadcastOrderEvent(event: OrderSyncEvent) {
         event: event.type,
         payload: event,
       })
-      .catch((e) => {
+      .catch((e: any) => {
         console.warn("Supabase realtime broadcast orders error", e);
       });
   }
@@ -114,7 +114,7 @@ export function subscribeToOrders(onEvent: (event: OrderSyncEvent) => void) {
     if (sb) {
       const channel = sb
         .channel("pos-live-orders")
-        .on("broadcast", { event: "*" }, (payload) => {
+        .on("broadcast", { event: "*" }, (payload: any) => {
           if (payload.payload) {
             onEvent(payload.payload as OrderSyncEvent);
           }
@@ -122,7 +122,7 @@ export function subscribeToOrders(onEvent: (event: OrderSyncEvent) => void) {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "Order" },
-          (payload) => {
+          (payload: any) => {
             if (payload.eventType === "UPDATE" && payload.new) {
               onEvent({
                 type: "ORDER_STATUS_CHANGED",
@@ -181,7 +181,7 @@ export function broadcastMenuEvent(event: MenuSyncEvent) {
           event: event.type,
           payload: event,
         })
-        .catch((e) => {
+        .catch((e: any) => {
           console.warn("Supabase realtime broadcast menu error", e);
         });
     }
@@ -217,7 +217,7 @@ export function subscribeToMenu(onEvent: (event: MenuSyncEvent) => void) {
     if (sb) {
       const channel = sb
         .channel("pos-live-menu")
-        .on("broadcast", { event: "*" }, (payload) => {
+        .on("broadcast", { event: "*" }, (payload: any) => {
           if (payload.payload) {
             onEvent(payload.payload as MenuSyncEvent);
           }

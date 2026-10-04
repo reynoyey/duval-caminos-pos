@@ -249,16 +249,16 @@ function createWorkbook(
     const row = s2.getRow(orderRowIdx++);
     row.height = 24;
 
-    const itemsSummary = o.items
-      .map((it) => {
-        const mods = it.modifiers && it.modifiers.length > 0 ? ` (${it.modifiers.map((m) => m.optionName).join(", ")})` : "";
+    const itemsSummary = (o.items || [])
+      .map((it: any) => {
+        const mods = it.modifiers && it.modifiers.length > 0 ? ` (${it.modifiers.map((m: any) => m.optionName).join(", ")})` : "";
         const note = it.note ? ` [Note: ${it.note}]` : "";
         return `${it.quantity}x ${it.productName}${mods}${note}`;
       })
       .join(" • ");
 
-    const cupCount = o.items.reduce((sum, it) => sum + (it.isBeverage ? it.quantity : 0), 0);
-    const pay = o.payments && o.payments[0];
+    const cupCount = (o.items || []).reduce((sum: number, it: any) => sum + (it.isBeverage ? it.quantity : 0), 0);
+    const pay = (Array.isArray(o.payments) && o.payments[0]) || o.payment;
 
     row.getCell("no").value = index + 1;
     row.getCell("orderNumber").value = o.orderNumber;
@@ -321,7 +321,7 @@ function createWorkbook(
   orders
     .filter((o) => o.status !== "CANCELLED")
     .forEach((o) => {
-      o.items.forEach((it) => {
+      (o.items || []).forEach((it: any) => {
         const existing = productMap.get(it.productName) || {
           name: it.productName,
           category: it.categoryName,
@@ -335,7 +335,7 @@ function createWorkbook(
 
         // Modifiers count
         if (it.modifiers) {
-          it.modifiers.forEach((m) => {
+          it.modifiers.forEach((m: any) => {
             if (m.optionCode === "MILK_OAT") oatMilkCount += it.quantity;
             if (m.optionCode === "MILK_ALMOND") almondMilkCount += it.quantity;
             if (m.optionCode === "ADDON_EXTRA_SHOT") extraShotCount += it.quantity;
@@ -456,16 +456,29 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { orders = [], summary, cashierName = "Alex Rivera" } = body;
+    const body = await req.json().catch(() => ({}));
+    let { orders = [], summary, cashierName = "Alex Rivera" } = body;
     const exportDate = fmtDateTime(new Date());
     const date = jakartaDateString();
 
+    if (!orders || orders.length === 0) {
+      const res = await loadReport({ kind: "daily", date });
+      orders = res.orders;
+      summary = res.summary;
+      if (res.shifts && res.shifts[0]) cashierName = res.shifts[0].cashierName;
+    }
+
+    const safeOrders = (orders || []).map((o: any) => ({
+      ...o,
+      items: o.items || [],
+      payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
+    }));
+
     const computedSummary =
       summary ||
-      (await import("@/lib/reports")).summarize(orders, 0);
+      (await import("@/lib/reports")).summarize(safeOrders, 0);
 
-    const wb = createWorkbook("Active Register Session", orders, computedSummary, {
+    const wb = createWorkbook("Active Register Session", safeOrders, computedSummary, {
       cashierName,
       exportDate,
     });

@@ -19,9 +19,11 @@ interface OrdersState {
 
   getNextOrderNumber: () => { queueNumber: number; orderNumber: string };
   addOrder: (order: OrderRecordDTO, sync?: boolean) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus, sync?: boolean) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus, sync?: boolean, isCollected?: boolean) => void;
   markCompleted: (orderId: string) => void;
   markProcessing: (orderId: string) => void;
+  markCollected: (orderId: string) => void;
+  restoreToPickup: (orderId: string) => void;
   cancelOrder: (orderId: string) => void;
   deleteOrderRecord: (orderId: string) => void;
   clearAllOrders: () => void;
@@ -74,32 +76,47 @@ export const useOrdersStore = create<OrdersState>()(
         }
       },
 
-      updateOrderStatus: (orderId, status, sync = true) => {
+      updateOrderStatus: (orderId, status, sync = true, isCollected?: boolean) => {
         const nowIso = new Date().toISOString();
         set((state) => ({
           orders: state.orders.map((o) =>
-            o.id === orderId ? { ...o, status, updatedAt: nowIso } : o
+            o.id === orderId
+              ? {
+                  ...o,
+                  status,
+                  ...(isCollected !== undefined ? { isCollected, collectedAt: isCollected ? nowIso : undefined } : {}),
+                  updatedAt: nowIso,
+                }
+              : o
           ),
         }));
 
         if (sync) {
           // 1. Local bus
-          broadcastOrderEvent({ type: "ORDER_STATUS_CHANGED", orderId, status });
+          broadcastOrderEvent({ type: "ORDER_STATUS_CHANGED", orderId, status, isCollected });
           // 2. Cloud server sync
           fetch("/api/orders", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId, status }),
+            body: JSON.stringify({ orderId, status, isCollected }),
           }).catch((err) => console.warn("Cloud updateOrderStatus sync error:", err));
         }
       },
 
       markCompleted: (orderId) => {
-        get().updateOrderStatus(orderId, "COMPLETED");
+        get().updateOrderStatus(orderId, "COMPLETED", true, false);
       },
 
       markProcessing: (orderId) => {
-        get().updateOrderStatus(orderId, "PROCESSING");
+        get().updateOrderStatus(orderId, "PROCESSING", true, false);
+      },
+
+      markCollected: (orderId) => {
+        get().updateOrderStatus(orderId, "COMPLETED", true, true);
+      },
+
+      restoreToPickup: (orderId) => {
+        get().updateOrderStatus(orderId, "COMPLETED", true, false);
       },
 
       cancelOrder: (orderId) => {
@@ -182,7 +199,13 @@ export const useOrdersStore = create<OrdersState>()(
             merged.length === state.orders.length &&
             merged.every((m, idx) => {
               const prev = state.orders[idx];
-              return prev && prev.id === m.id && prev.status === m.status && prev.updatedAt === m.updatedAt;
+              return (
+                prev &&
+                prev.id === m.id &&
+                prev.status === m.status &&
+                prev.isCollected === m.isCollected &&
+                prev.updatedAt === m.updatedAt
+              );
             })
           ) {
             return state;

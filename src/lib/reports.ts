@@ -14,10 +14,27 @@ export type ReportScope =
 
 export async function loadReport(scope: ReportScope) {
   if (!process.env.DATABASE_URL) {
+    try {
+      const { getInMemoryOrders } = await import("@/app/api/orders/route");
+      const live = getInMemoryOrders();
+      if (live && live.length > 0) {
+        const formattedOrders: GenericReportOrder[] = live.map((o) => ({
+          ...o,
+          payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
+        }));
+        return {
+          title: "Active Register Shift",
+          shifts: [{ cashierName: "Alex Rivera", openedAt: new Date().toISOString(), openingCash: 0, status: "OPEN" as const, id: "shift-live-01" }],
+          orders: formattedOrders,
+          summary: summarize(formattedOrders, 0),
+        };
+      }
+    } catch {}
+
     const { INITIAL_ORDERS, DEFAULT_SHIFT } = await import("./mock-data");
     const formattedOrders: GenericReportOrder[] = INITIAL_ORDERS.map((o) => ({
       ...o,
-      payments: [o.payment],
+      payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
     }));
     return {
       title: "Active Register Shift",
@@ -66,11 +83,28 @@ export async function loadReport(scope: ReportScope) {
       summary: summarize(orders, openingCash),
     };
   } catch (err) {
-    console.warn("Database report load failed, falling back to mock data:", err);
+    console.warn("Database report load failed, checking live in-memory orders:", err);
+    try {
+      const { getInMemoryOrders } = await import("@/app/api/orders/route");
+      const live = getInMemoryOrders();
+      if (live && live.length > 0) {
+        const formattedOrders: GenericReportOrder[] = live.map((o) => ({
+          ...o,
+          payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
+        }));
+        return {
+          title: "Active Register Shift",
+          shifts: [{ cashierName: "Alex Rivera", openedAt: new Date().toISOString(), openingCash: 0, status: "OPEN" as const, id: "shift-live-01" }],
+          orders: formattedOrders,
+          summary: summarize(formattedOrders, 0),
+        };
+      }
+    } catch {}
+
     const { INITIAL_ORDERS, DEFAULT_SHIFT } = await import("./mock-data");
     const formattedOrders: GenericReportOrder[] = INITIAL_ORDERS.map((o) => ({
       ...o,
-      payments: [o.payment],
+      payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
     }));
     return {
       title: "Active Register Shift (Offline Mode)",

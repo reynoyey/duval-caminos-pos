@@ -38,47 +38,63 @@ type ShiftRangeFilter = "ALL" | "SHIFT_1" | "SHIFT_2";
 
 export function ShiftReportsView() {
   const orders = useOrdersStore((s) => s.orders);
+  const fetchLatestOrders = useOrdersStore((s) => s.fetchLatestOrders);
   const [isExporting, setIsExporting] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
+  // Auto fetch latest orders on mount
+  useState(() => {
+    fetchLatestOrders().catch(() => null);
+  });
+
+  // Current date in Jakarta timezone (YYYY-MM-DD)
+  const getJakartaDateStr = (d: Date | string) => {
+    try {
+      const obj = typeof d === "string" ? new Date(d) : d;
+      return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(obj);
+    } catch {
+      return new Date(d).toISOString().slice(0, 10);
+    }
+  };
+
   // Filters state
   const [dateFilter, setDateFilter] = useState<DateRangeFilter>("TODAY");
-  const [customDate, setCustomDate] = useState<string>(
-    new Date().toISOString().slice(0, 10)
-  );
+  const [customDate, setCustomDate] = useState<string>(getJakartaDateStr(new Date()));
   const [shiftFilter, setShiftFilter] = useState<ShiftRangeFilter>("ALL");
 
   // Cash Reconciliation state - defaults to 0 as requested
   const [startingFloat, setStartingFloat] = useState<number>(0);
   const [countedCashStr, setCountedCashStr] = useState<string>("");
 
-  // Filter orders according to date and shift range
+  // Filter orders according to date and shift range in Jakarta timezone
   const filteredOrders = useMemo(() => {
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
+    const todayStr = getJakartaDateStr(new Date());
 
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    const yesterdayObj = new Date();
+    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+    const yesterdayStr = getJakartaDateStr(yesterdayObj);
 
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoObj = new Date();
+    sevenDaysAgoObj.setDate(sevenDaysAgoObj.getDate() - 7);
 
     return orders.filter((o) => {
-      const orderDate = new Date(o.createdAt);
-      const orderDateStr = orderDate.toISOString().slice(0, 10);
+      const orderDateStr = getJakartaDateStr(o.createdAt);
+      const orderTime = new Date(o.createdAt).getTime();
 
       // Date filtering
       if (dateFilter === "TODAY" && orderDateStr !== todayStr) return false;
       if (dateFilter === "YESTERDAY" && orderDateStr !== yesterdayStr) return false;
-      if (dateFilter === "WEEK" && orderDate < sevenDaysAgo) return false;
+      if (dateFilter === "WEEK" && orderTime < sevenDaysAgoObj.getTime()) return false;
       if (dateFilter === "CUSTOM" && orderDateStr !== customDate) return false;
 
-      // Shift filtering by hour
-      // Morning Shift: 07:00 - 15:00, Evening Shift: 15:00 - 23:00
-      const hour = orderDate.getHours();
-      if (shiftFilter === "SHIFT_1" && (hour < 7 || hour >= 15)) return false;
-      if (shiftFilter === "SHIFT_2" && (hour < 15 || hour >= 23)) return false;
+      // Shift filtering by hour in Jakarta timezone
+      const orderDateObj = new Date(o.createdAt);
+      const jakartaHour = Number(
+        new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Jakarta", hour: "numeric", hour12: false }).format(orderDateObj)
+      );
+
+      if (shiftFilter === "SHIFT_1" && (jakartaHour < 7 || jakartaHour >= 15)) return false;
+      if (shiftFilter === "SHIFT_2" && (jakartaHour < 15 || jakartaHour >= 23)) return false;
 
       return true;
     });
@@ -88,7 +104,7 @@ export function ShiftReportsView() {
   const summary = useMemo(() => {
     const formattedOrders = filteredOrders.map((o) => ({
       ...o,
-      payments: [o.payment],
+      payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
     }));
     return summarize(formattedOrders, startingFloat);
   }, [filteredOrders, startingFloat]);
@@ -102,9 +118,11 @@ export function ShiftReportsView() {
     toast.loading("Generating multi-sheet Excel workbook...", { id: "excel-export" });
 
     try {
-      const formattedOrders = filteredOrders.map((o) => ({
+      const targetOrders = filteredOrders.length > 0 ? filteredOrders : orders;
+      const formattedOrders = targetOrders.map((o) => ({
         ...o,
-        payments: [o.payment],
+        items: o.items || [],
+        payments: (Array.isArray(o.payments) && o.payments.length > 0) ? o.payments : (o.payment ? [o.payment] : []),
       }));
 
       const res = await fetch("/api/reports/export-excel", {
@@ -127,7 +145,7 @@ export function ShiftReportsView() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Duval_Caminos_Shift_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `Duval_Caminos_Shift_Report_${getJakartaDateStr(new Date())}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -362,6 +380,92 @@ export function ShiftReportsView() {
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Download .xlsx
         </Button>
+      </div>
+
+      {/* ==================================================================== */}
+      {/* DETAILED TRANSACTION LOG TABLE                                       */}
+      {/* ==================================================================== */}
+      <div className="rounded-xl border border-white/10 bg-[#0E131F] p-5 my-4 shadow-sm overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/10">
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-cyan-400" />
+              <span>Daftar Transaksi Kasir Terdata ({filteredOrders.length} Pesanan)</span>
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Semua transaksi yang masuk dalam rekap dan diekspor ke file Excel (.xlsx).
+            </p>
+          </div>
+          <span className="text-xs font-mono text-cyan-400 font-bold">
+            Total Penjualan: {formatRupiah(summary.totalSales)}
+          </span>
+        </div>
+
+        <div className="overflow-x-auto mt-3">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 bg-[#161F30]">
+                <th className="py-2.5 px-3">Ticket</th>
+                <th className="py-2.5 px-3">ID Order</th>
+                <th className="py-2.5 px-3">Waktu</th>
+                <th className="py-2.5 px-3">Pelanggan</th>
+                <th className="py-2.5 px-3">Tipe</th>
+                <th className="py-2.5 px-3">Item Pesanan</th>
+                <th className="py-2.5 px-3">Metode Bayar</th>
+                <th className="py-2.5 px-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 font-medium">
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                    Tidak ada transaksi pada filter tanggal/shift yang dipilih.
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((o) => (
+                  <tr key={o.id} className="hover:bg-white/5 transition">
+                    <td className="py-2.5 px-3 font-mono font-bold text-amber-400">
+                      #{o.queueNumber}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-slate-400">
+                      {o.orderNumber}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-300 whitespace-nowrap">
+                      {formatDateTime(o.createdAt)}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-white">
+                      {o.customerName}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-300">
+                        {o.orderType === "DINE_IN" ? "Dine-in" : "Takeaway"}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-300 max-w-xs truncate">
+                      {o.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                        o.payment?.method === "QRIS"
+                          ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                          : o.payment?.method === "CASH"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                      )}>
+                        {o.payment?.method || "CASH"}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-white whitespace-nowrap">
+                      {formatRupiah(o.total)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ==================================================================== */}

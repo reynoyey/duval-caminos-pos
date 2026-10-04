@@ -20,6 +20,8 @@ import {
   UtensilsCrossed,
   ShoppingBag,
   Sparkles,
+  History,
+  CheckCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +30,13 @@ import { useOrdersStore } from "@/stores/orders-store";
 import { subscribeToOrders, isSupabaseConfigured } from "@/lib/supabase";
 import type { OrderRecordDTO } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Props {
   onViewReceipt: (order: OrderRecordDTO) => void;
@@ -77,6 +86,8 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
   const updateOrderStatus = useOrdersStore((s) => s.updateOrderStatus);
   const markCompleted = useOrdersStore((s) => s.markCompleted);
   const markProcessing = useOrdersStore((s) => s.markProcessing);
+  const markCollected = useOrdersStore((s) => s.markCollected);
+  const restoreToPickup = useOrdersStore((s) => s.restoreToPickup);
   const cancelOrder = useOrdersStore((s) => s.cancelOrder);
   const fetchLatestOrders = useOrdersStore((s) => s.fetchLatestOrders);
 
@@ -84,6 +95,7 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [nowTimestamp, setNowTimestamp] = useState(Date.now());
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showCollectedModal, setShowCollectedModal] = useState(false);
 
   // Background multi-device orders polling
   useEffect(() => {
@@ -111,8 +123,8 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
           icon: "☕",
         });
       } else if (event.type === "ORDER_STATUS_CHANGED") {
-        updateOrderStatus(event.orderId, event.status, false);
-        if (event.status === "COMPLETED") {
+        updateOrderStatus(event.orderId, event.status, false, event.isCollected);
+        if (event.status === "COMPLETED" && !event.isCollected) {
           playOrderReadyChime();
         }
       }
@@ -137,6 +149,13 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
     playOrderReadyChime();
     toast.success(`Order #${order.queueNumber} for ${order.customerName} is READY!`, {
       icon: "🔔",
+    });
+  };
+
+  const handleMarkCollected = (order: OrderRecordDTO) => {
+    markCollected(order.id);
+    toast.success(`Order #${order.queueNumber} (${order.customerName}) diserahkan ke pelanggan!`, {
+      icon: "✅",
     });
   };
 
@@ -165,13 +184,30 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
     );
   }, [orders, searchQuery]);
 
+  // FIFO Queue: Oldest brewing orders on top so earlier customers get served first!
   const processingOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "PROCESSING"),
+    () =>
+      filteredOrders
+        .filter((o) => o.status === "PROCESSING")
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
     [filteredOrders]
   );
 
+  // Ready for pickup (only uncollected orders)
   const completedOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "COMPLETED"),
+    () =>
+      filteredOrders
+        .filter((o) => o.status === "COMPLETED" && !o.isCollected)
+        .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()),
+    [filteredOrders]
+  );
+
+  // Handed-over / collected orders history
+  const collectedOrders = useMemo(
+    () =>
+      filteredOrders
+        .filter((o) => o.status === "COMPLETED" && o.isCollected)
+        .sort((a, b) => new Date(b.collectedAt || b.updatedAt || b.createdAt).getTime() - new Date(a.collectedAt || a.updatedAt || a.createdAt).getTime()),
     [filteredOrders]
   );
 
@@ -376,6 +412,14 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                               <User className="w-4 h-4 text-amber-400" />
                               <span>{order.customerName}</span>
                             </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-mono text-xs font-bold text-amber-300">
+                                {formatRupiah(order.total)}
+                              </span>
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-slate-300 uppercase">
+                                {order.payment?.method || "PAID"}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Elapsed Timer & Alert */}
@@ -523,6 +567,17 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
               </div>
 
               <div className="flex items-center gap-2">
+                {collectedOrders.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCollectedModal(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-slate-300 border border-white/10 transition"
+                    title="Lihat riwayat pesanan yang sudah diserahkan ke pelanggan"
+                  >
+                    <History className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Riwayat ({collectedOrders.length})</span>
+                  </button>
+                )}
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-extrabold bg-emerald-500 text-stone-950 shadow-md">
                   {completedOrders.length} ready
                 </span>
@@ -565,6 +620,14 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                           <h4 className="text-lg font-black text-stone-100 mt-0.5">
                             {order.customerName}
                           </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-mono text-xs font-bold text-emerald-300">
+                              {formatRupiah(order.total)}
+                            </span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-slate-300 uppercase">
+                              {order.payment?.method || "PAID"}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex flex-col items-end gap-1">
@@ -594,17 +657,27 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                         ))}
                       </div>
 
-                      {/* Return to Brewing action */}
-                      <div className="flex items-center justify-between pt-2 border-t border-stone-800">
+                      {/* Order completion and return actions */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-stone-800">
+                        <Button
+                          type="button"
+                          onClick={() => handleMarkCollected(order)}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs h-9 shadow-md shadow-emerald-950/40"
+                          title="Tandai pesanan sudah diambil oleh pelanggan"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                          <span>Selesai Diambil</span>
+                        </Button>
+
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleReturnToBrewing(order.id)}
-                          className="border-stone-800 bg-stone-900 text-stone-300 hover:bg-stone-800 text-xs h-8"
+                          className="border-stone-800 bg-stone-900 text-stone-300 hover:bg-stone-800 text-xs h-9 px-2.5"
+                          title="Kembalikan ke antrean brewing"
                         >
-                          <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                          <span>Return to Brewing</span>
+                          <RotateCcw className="w-3.5 h-3.5" />
                         </Button>
 
                         <Button
@@ -612,10 +685,10 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
                           variant="ghost"
                           size="sm"
                           onClick={() => onViewReceipt(order)}
-                          className="text-stone-400 hover:text-stone-200 text-xs h-8"
+                          className="text-stone-400 hover:text-stone-200 text-xs h-9 px-2.5"
+                          title="Lihat Struk"
                         >
-                          <Receipt className="w-3.5 h-3.5 mr-1.5" />
-                          <span>Receipt</span>
+                          <Receipt className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </motion.div>
@@ -742,6 +815,85 @@ export function LiveOrdersBoard({ onViewReceipt }: Props) {
           </div>
         </div>
       )}
+      {/* ==================================================================== */}
+      {/* DIALOG: RIWAYAT PESANAN SELESAI DIAMBIL                               */}
+      {/* ==================================================================== */}
+      <Dialog open={showCollectedModal} onOpenChange={setShowCollectedModal}>
+        <DialogContent className="sm:max-w-lg bg-[#111726] border border-white/10 text-white p-0 overflow-hidden shadow-2xl shadow-black/80">
+          <div className="bg-[#161F30] px-5 pt-4 pb-3 border-b border-white/10 flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+                <CheckCheck className="w-4 h-4 text-emerald-400" />
+                <span>Riwayat Pesanan Selesai Diambil</span>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                Daftar minuman yang sudah diserahkan ke pelanggan shift ini ({collectedOrders.length} pesanan).
+              </DialogDescription>
+            </div>
+          </div>
+
+          <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2.5 no-scrollbar">
+            {collectedOrders.length === 0 ? (
+              <div className="p-8 text-center text-stone-400 text-xs">
+                Belum ada pesanan yang ditandai selesai diambil.
+              </div>
+            ) : (
+              collectedOrders.map((ord) => (
+                <div
+                  key={ord.id}
+                  className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-[#161F30]"
+                >
+                  <div className="min-w-0 pr-3">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-mono text-base font-extrabold text-emerald-400">
+                        #{ord.queueNumber}
+                      </span>
+                      <span className="font-bold text-white text-xs truncate">
+                        {ord.customerName}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        ({formatRupiah(ord.total)})
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                      {ord.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}
+                    </p>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Diserahkan: {formatDateTime(ord.collectedAt || ord.updatedAt || ord.createdAt)}
+                    </span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      restoreToPickup(ord.id);
+                      toast.info(`Pesanan #${ord.queueNumber} dikembalikan ke Siap Diambil`);
+                    }}
+                    className="border-white/10 bg-[#1E293B] hover:bg-white/10 text-xs shrink-0 text-slate-200"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    <span>Kembalikan</span>
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="border-t border-white/10 bg-[#0E131F] px-5 py-3 flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCollectedModal(false)}
+              className="border-white/10 text-xs text-white"
+            >
+              Tutup
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

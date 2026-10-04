@@ -125,6 +125,9 @@ export interface OrderRecordDTO {
   updatedAt?: string;
   items: OrderItemDTO[];
   payment: OrderPaymentDTO;
+  payments?: OrderPaymentDTO[];
+  isCollected?: boolean;
+  collectedAt?: string;
 }
 
 /** Payload for POST /api/orders */

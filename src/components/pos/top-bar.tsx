@@ -30,6 +30,8 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
 
   const activeCashier = storedCashier || propCashier || "Alex Rivera";
   const processingCount = orders.filter((o) => o.status === "PROCESSING").length;
+  const readyCount = orders.filter((o) => o.status === "COMPLETED" && !o.isCollected).length;
+  const totalActiveOrders = processingCount + readyCount;
 
   useEffect(() => {
     const update = () => {
@@ -106,12 +108,12 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
               : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
-          <Flame className={cn("w-3.5 h-3.5 shrink-0", processingCount > 0 ? "text-cyan-400" : "text-slate-400")} />
+          <Flame className={cn("w-3.5 h-3.5 shrink-0", totalActiveOrders > 0 ? "text-cyan-400" : "text-slate-400")} />
           <span className="hidden md:inline">Live Orders</span>
           <span className="md:hidden">Orders</span>
-          {processingCount > 0 && (
+          {totalActiveOrders > 0 && (
             <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-              {processingCount}
+              {totalActiveOrders}
             </span>
           )}
         </button>
