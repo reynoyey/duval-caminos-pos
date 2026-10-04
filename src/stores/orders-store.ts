@@ -133,36 +133,53 @@ export const useOrdersStore = create<OrdersState>()(
         if (!remoteOrders || !Array.isArray(remoteOrders)) return;
 
         set((state) => {
-          const map = new Map<string, OrderRecordDTO>();
-          for (const ord of state.orders) {
-            map.set(ord.id, ord);
+          const now = Date.now();
+          const RECENT_THRESHOLD_MS = 15000; // 15s grace period for in-flight local additions
+
+          const remoteMap = new Map<string, OrderRecordDTO>();
+          for (const ro of remoteOrders) {
+            remoteMap.set(ro.id, ro);
           }
 
-          let changed = false;
+          // Build merged list
+          const mergedMap = new Map<string, OrderRecordDTO>();
+
+          // 1. All remote orders from server
           for (const ro of remoteOrders) {
-            const existing = map.get(ro.id);
-            if (!existing) {
-              map.set(ro.id, ro);
-              changed = true;
+            mergedMap.set(ro.id, ro);
+          }
+
+          // 2. Keep locally created orders that are recent and still in-flight
+          for (const lo of state.orders) {
+            if (!remoteMap.has(lo.id)) {
+              const orderAge = now - new Date(lo.createdAt).getTime();
+              if (orderAge < RECENT_THRESHOLD_MS) {
+                mergedMap.set(lo.id, lo);
+              }
             } else {
-              // If status changed or remote updatedAt is newer
-              if (
-                existing.status !== ro.status ||
-                (ro.updatedAt && (!existing.updatedAt || ro.updatedAt > existing.updatedAt))
-              ) {
-                map.set(ro.id, { ...existing, ...ro });
-                changed = true;
+              // If local copy has a newer updatedAt, preserve local version
+              const ro = remoteMap.get(lo.id)!;
+              if (lo.updatedAt && ro.updatedAt && lo.updatedAt > ro.updatedAt) {
+                mergedMap.set(lo.id, lo);
               }
             }
           }
 
-          if (!changed && map.size === state.orders.length) {
+          const merged = Array.from(mergedMap.values()).sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // Skip state update if nothing has changed
+          if (
+            merged.length === state.orders.length &&
+            merged.every((m, idx) => {
+              const prev = state.orders[idx];
+              return prev && prev.id === m.id && prev.status === m.status && prev.updatedAt === m.updatedAt;
+            })
+          ) {
             return state;
           }
 
-          const merged = Array.from(map.values()).sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
           const maxSeq = merged.reduce((m, o) => Math.max(m, o.queueNumber || 0), 0);
 
           return {
