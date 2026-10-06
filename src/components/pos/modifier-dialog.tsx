@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Check, Minus, Plus, Flame, Snowflake, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { cn, formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah, isPastryOrFood } from "@/lib/utils";
 import type { ModifierGroupDTO } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,24 @@ export function ModifierDialog() {
 
   useEffect(() => {
     if (!s.isOpen) return;
+    if (product && (isPastryOrFood(product) || !product.modifierGroups || product.modifierGroups.length === 0)) {
+      addLine({
+        product: {
+          id: product.id,
+          name: product.name,
+          categoryName: product.categoryName,
+          isBeverage: false,
+          basePrice: product.basePrice,
+        },
+        modifiers: [],
+        quantity: s.quantity || 1,
+        note: s.note,
+      });
+      toast.success(`Added ${product.name} to order`);
+      s.close();
+      return;
+    }
+
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === "TEXTAREA") {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submit();
@@ -84,7 +102,7 @@ export function ModifierDialog() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.isOpen, s.selections, s.quantity, s.note]);
+  }, [s.isOpen, s.selections, s.quantity, s.note, product]);
 
   return (
     <Dialog open={s.isOpen} onOpenChange={(o) => !o && s.close()}>
@@ -107,7 +125,7 @@ export function ModifierDialog() {
                 {product.name}
               </DialogTitle>
               <DialogDescription className="mt-0.5 text-xs text-slate-400">
-                {product.description || "Customise your handcrafted specialty coffee"} · Base {formatRupiah(product.basePrice)}
+                {product.description || (isPastryOrFood(product) ? "Freshly baked artisan pastry" : "Customise your handcrafted specialty coffee")} · Base {formatRupiah(product.basePrice)}
               </DialogDescription>
             </div>
 

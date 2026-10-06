@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   Settings,
@@ -34,11 +34,7 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
     storeTagline,
     storeAddress,
     logoUrl,
-    setCashierName,
-    setLogoUrl,
-    setStoreName,
-    setStoreTagline,
-    setStoreAddress,
+    saveAllSettings,
     resetSettings,
   } = useSettingsStore();
 
@@ -52,6 +48,16 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
   const [draftLogo, setDraftLogo] = useState(logoUrl);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // Resync drafts when dialog opens or store updates
+  useEffect(() => {
+    if (open) {
+      setDraftCashier(cashierName);
+      setDraftStoreName(storeName);
+      setDraftAddress(storeAddress || DEFAULT_SETTINGS.storeAddress);
+      setDraftLogo(logoUrl);
+    }
+  }, [open, cashierName, storeName, storeAddress, logoUrl]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,28 +69,62 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Ukuran file maksimal 2 MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 5 MB");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (result) {
-        setDraftLogo(result);
+      const src = event.target?.result as string;
+      if (!src) return;
+
+      const img = new window.Image();
+      img.onload = () => {
+        // Optimize and compress logo for instant realtime multi-device sync
+        const canvas = document.createElement("canvas");
+        const maxDim = 320;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/webp", 0.85);
+          setDraftLogo(compressed);
+          toast.success("Logo baru berhasil dimuat & dioptimalkan!");
+        } else {
+          setDraftLogo(src);
+          toast.success("Logo baru berhasil dimuat!");
+        }
+      };
+      img.onerror = () => {
+        setDraftLogo(src);
         toast.success("Logo baru berhasil dimuat!");
-      }
+      };
+      img.src = src;
     };
     reader.readAsDataURL(file);
   };
 
   const handleSave = () => {
-    setCashierName(draftCashier.trim() || DEFAULT_SETTINGS.cashierName);
-    setStoreName(draftStoreName.trim() || DEFAULT_SETTINGS.storeName);
-    setStoreAddress(draftAddress.trim() || DEFAULT_SETTINGS.storeAddress);
-    setLogoUrl(draftLogo || DEFAULT_SETTINGS.logoUrl);
-    toast.success("Pengaturan kasir & logo berhasil disimpan!");
+    saveAllSettings({
+      cashierName: draftCashier.trim() || DEFAULT_SETTINGS.cashierName,
+      storeName: draftStoreName.trim() || DEFAULT_SETTINGS.storeName,
+      storeAddress: draftAddress.trim() || DEFAULT_SETTINGS.storeAddress,
+      logoUrl: draftLogo || DEFAULT_SETTINGS.logoUrl,
+    });
+    toast.success("Pengaturan kasir & logo berhasil disimpan & disinkronkan ke semua perangkat!");
     onOpenChange(false);
   };
 
@@ -150,6 +190,7 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
                     src={draftLogo || "/logo.jpg"}
                     alt="Store Logo Preview"
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>

@@ -40,6 +40,7 @@ export interface ProductDTO {
   categoryName: string;
   modifierGroups: ModifierGroupDTO[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryDTO {

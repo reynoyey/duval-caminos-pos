@@ -1,14 +1,18 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { OrderRecordDTO, ProductDTO } from "./types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const DEFAULT_SUPABASE_URL = "https://wafeaoqxmdxemhynvbjn.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_lyYoIWqGFTZl_gNuk9zr2A_08rDJiqt";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  DEFAULT_SUPABASE_KEY;
 
-// Only initialize Supabase if both URL and a valid signed JWT key are present
+// Initialize Supabase if URL and anon/publishable key are present
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && supabaseAnonKey && supabaseAnonKey.startsWith("eyJ")
+  supabaseUrl && supabaseAnonKey && supabaseAnonKey.length > 10
 );
 
 let client: SupabaseClient | null = null;
@@ -54,8 +58,23 @@ export type MenuSyncEvent =
   | { type: "CATALOG_RESET" }
   | { type: "CATALOG_SYNC"; products: ProductDTO[] };
 
+export type SettingsSyncData = {
+  cashierName?: string;
+  storeName?: string;
+  storeTagline?: string;
+  storeAddress?: string;
+  logoUrl?: string;
+  updatedAt?: string;
+};
+
+export type SettingsSyncEvent = {
+  type: "SETTINGS_UPDATED";
+  settings: SettingsSyncData;
+};
+
 const LOCAL_ORDERS_CHANNEL = "duval-caminos-orders-bus";
 const LOCAL_MENU_CHANNEL = "duval-caminos-menu-bus";
+const LOCAL_SETTINGS_CHANNEL = "duval-caminos-settings-bus";
 
 // ----------------------------------------------------------------------------
 //  ORDERS SYNC
@@ -233,6 +252,96 @@ export function subscribeToMenu(onEvent: (event: MenuSyncEvent) => void) {
     }
   } catch (e) {
     console.warn("Supabase menu channel subscription error:", e);
+  }
+
+  return () => {
+    cleanups.forEach((fn) => {
+      try {
+        fn();
+      } catch {}
+    });
+  };
+}
+
+// ----------------------------------------------------------------------------
+//  SETTINGS / CASHIER & LOGO SYNC
+// ----------------------------------------------------------------------------
+
+/** Broadcast settings change across local tabs and via Supabase to other devices */
+export function broadcastSettingsEvent(event: SettingsSyncEvent) {
+  // 1. Local BroadcastChannel (immediate same-device sync)
+  if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+    try {
+      const channel = new BroadcastChannel(LOCAL_SETTINGS_CHANNEL);
+      channel.postMessage(event);
+      channel.close();
+    } catch (e) {
+      console.warn("Local broadcast settings error", e);
+    }
+  }
+
+  // 2. Supabase Realtime broadcast (cross-device sync)
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const channel = sb.channel("pos-live-settings");
+      channel
+        .send({
+          type: "broadcast",
+          event: event.type,
+          payload: event,
+        })
+        .catch((e: any) => {
+          console.warn("Supabase realtime broadcast settings error", e);
+        });
+    }
+  } catch {}
+}
+
+/** Listen to settings changes from other devices in real-time */
+export function subscribeToSettings(onEvent: (event: SettingsSyncEvent) => void) {
+  const cleanups: (() => void)[] = [];
+
+  // 1. Local BroadcastChannel listener
+  if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+    try {
+      const localChannel = new BroadcastChannel(LOCAL_SETTINGS_CHANNEL);
+      const handleMessage = (evt: MessageEvent<SettingsSyncEvent>) => {
+        if (evt.data && evt.data.type) {
+          onEvent(evt.data);
+        }
+      };
+      localChannel.addEventListener("message", handleMessage);
+      cleanups.push(() => {
+        try {
+          localChannel.removeEventListener("message", handleMessage);
+          localChannel.close();
+        } catch {}
+      });
+    } catch {}
+  }
+
+  // 2. Supabase Realtime listener (cross-device)
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const channel = sb
+        .channel("pos-live-settings")
+        .on("broadcast", { event: "*" }, (payload: any) => {
+          if (payload.payload) {
+            onEvent(payload.payload as SettingsSyncEvent);
+          }
+        })
+        .subscribe();
+
+      cleanups.push(() => {
+        try {
+          sb.removeChannel(channel);
+        } catch {}
+      });
+    }
+  } catch (e) {
+    console.warn("Supabase settings channel subscription error:", e);
   }
 
   return () => {

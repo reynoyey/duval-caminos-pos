@@ -67,6 +67,7 @@ export function TopBar({ activeTab, onTabChange, cashierName: propCashier, onOpe
             src={logoUrl || "/logo.jpg"}
             alt={storeName}
             fill
+            unoptimized
             className="object-cover"
             priority
           />

@@ -15,7 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn, formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah, isPastryOrFood } from "@/lib/utils";
 import { useMenuStore } from "@/stores/menu-store";
 import type { CreateProductPayload, ProductDTO } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -58,10 +58,16 @@ export function MenuManager() {
   const handleStartAdd = () => {
     setEditingProduct(null);
     setName("");
-    setCategoryId(categories[0]?.id || "cat-sig");
+    const initialCat = activeCategory !== "ALL"
+      ? (categories.find((c) => c.id === activeCategory)?.id || categories[0]?.id || "cat-sig")
+      : (categories[0]?.id || "cat-sig");
+    const selectedCat = categories.find((c) => c.id === initialCat);
+    const isPastry = isPastryOrFood(selectedCat);
+
+    setCategoryId(initialCat);
     setBasePrice("");
     setDescription("");
-    setIsBeverage(true);
+    setIsBeverage(!isPastry);
     setTag("");
     setIsAddModalOpen(true);
   };
@@ -72,9 +78,20 @@ export function MenuManager() {
     setCategoryId(prod.categoryId);
     setBasePrice(String(prod.basePrice));
     setDescription(prod.description || "");
-    setIsBeverage(prod.isBeverage);
+    const isPastry = isPastryOrFood(prod);
+    setIsBeverage(!isPastry && prod.isBeverage);
     setTag(prod.tag || "");
     setIsAddModalOpen(true);
+  };
+
+  const handleCategoryChange = (newCatId: string) => {
+    setCategoryId(newCatId);
+    const selectedCat = categories.find((c) => c.id === newCatId);
+    if (isPastryOrFood(selectedCat)) {
+      setIsBeverage(false);
+    } else {
+      setIsBeverage(true);
+    }
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
@@ -89,6 +106,10 @@ export function MenuManager() {
       return;
     }
 
+    const selectedCat = categories.find((c) => c.id === categoryId);
+    const isPastry = isPastryOrFood(selectedCat) || !isBeverage;
+    const finalIsBeverage = !isPastry;
+
     if (editingProduct) {
       updateProduct({
         id: editingProduct.id,
@@ -96,7 +117,7 @@ export function MenuManager() {
         categoryId,
         basePrice: priceNum,
         description: description.trim() || undefined,
-        isBeverage,
+        isBeverage: finalIsBeverage,
         tag: tag.trim() || undefined,
       });
       toast.success(`Berhasil memperbarui menu "${name.trim()}"!`);
@@ -106,7 +127,7 @@ export function MenuManager() {
         categoryId,
         basePrice: priceNum,
         description: description.trim() || undefined,
-        isBeverage,
+        isBeverage: finalIsBeverage,
         tag: tag.trim() || undefined,
         isAvailable: true,
       };
@@ -291,16 +312,21 @@ export function MenuManager() {
 
                 {/* Type */}
                 <td className="py-3 px-4 text-center">
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase border",
-                      prod.isBeverage
-                        ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                        : "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                    )}
-                  >
-                    {prod.isBeverage ? "Beverage" : "Food / Pastry"}
-                  </span>
+                  {(() => {
+                    const isPastry = isPastryOrFood(prod);
+                    return (
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase border",
+                          !isPastry && prod.isBeverage
+                            ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                            : "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                        )}
+                      >
+                        {!isPastry && prod.isBeverage ? "Beverage (Custom)" : "Pastry / Food (No Custom)"}
+                      </span>
+                    );
+                  })()}
                 </td>
 
                 {/* Stock Toggle */}
@@ -415,7 +441,7 @@ export function MenuManager() {
                   <select
                     id="prod-cat"
                     value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                     className="h-9 w-full rounded-md border border-white/10 bg-[#0D121D] px-3 text-xs text-white outline-none focus:border-cyan-500/50"
                   >
                     {categories.map((c) => (
@@ -457,49 +483,81 @@ export function MenuManager() {
               </div>
 
               {/* Item Type & Tag */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-slate-300 font-semibold">Classification</Label>
-                  <div className="flex rounded-lg border border-white/10 bg-[#0D121D] p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setIsBeverage(true)}
-                      className={cn(
-                        "flex-1 py-1 rounded-md text-xs font-semibold transition",
-                        isBeverage
-                          ? "bg-[#1E293B] text-white shadow-sm"
-                          : "text-slate-400 hover:text-white"
-                      )}
-                    >
-                      Beverage
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsBeverage(false)}
-                      className={cn(
-                        "flex-1 py-1 rounded-md text-xs font-semibold transition",
-                        !isBeverage
-                          ? "bg-[#1E293B] text-white shadow-sm"
-                          : "text-slate-400 hover:text-white"
-                      )}
-                    >
-                      Food / Pastry
-                    </button>
-                  </div>
-                </div>
+              <div className="space-y-3 pt-1">
+                {(() => {
+                  const isCurrentCatPastry = isPastryOrFood(categories.find((c) => c.id === categoryId));
+                  return isCurrentCatPastry ? (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                      <p className="font-semibold text-amber-300 flex items-center gap-1.5 mb-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        Kategori Pastry & Bakery (Tanpa Custom)
+                      </p>
+                      <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                        Item dalam kategori pastry otomatis tidak memiliki pilihan varian ice, gula/sweetness, cup size, dan susu. Kasir dapat langsung menambahkan item ke pesanan dengan sekali klik.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-300 font-semibold">Classification</Label>
+                        <div className="flex rounded-lg border border-white/10 bg-[#0D121D] p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setIsBeverage(true)}
+                            className={cn(
+                              "flex-1 py-1 rounded-md text-xs font-semibold transition",
+                              isBeverage
+                                ? "bg-[#1E293B] text-white shadow-sm"
+                                : "text-slate-400 hover:text-white"
+                            )}
+                          >
+                            Beverage
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsBeverage(false)}
+                            className={cn(
+                              "flex-1 py-1 rounded-md text-xs font-semibold transition",
+                              !isBeverage
+                                ? "bg-[#1E293B] text-white shadow-sm"
+                                : "text-slate-400 hover:text-white"
+                            )}
+                          >
+                            Food / Pastry
+                          </button>
+                        </div>
+                      </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="prod-tag" className="text-xs text-slate-300 font-semibold">
-                    Highlight Badge (Optional)
-                  </Label>
-                  <Input
-                    id="prod-tag"
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                    placeholder="e.g. Best Seller, Barista Pick"
-                    className="h-9 text-xs bg-[#0D121D] border border-white/10 text-white placeholder:text-slate-500 focus:border-cyan-500/50"
-                  />
-                </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="prod-tag" className="text-xs text-slate-300 font-semibold">
+                          Highlight Badge (Optional)
+                        </Label>
+                        <Input
+                          id="prod-tag"
+                          value={tag}
+                          onChange={(e) => setTag(e.target.value)}
+                          placeholder="e.g. Best Seller, Barista Pick"
+                          className="h-9 text-xs bg-[#0D121D] border border-white/10 text-white placeholder:text-slate-500 focus:border-cyan-500/50"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {isPastryOrFood(categories.find((c) => c.id === categoryId)) && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prod-tag" className="text-xs text-slate-300 font-semibold">
+                      Highlight Badge (Optional)
+                    </Label>
+                    <Input
+                      id="prod-tag"
+                      value={tag}
+                      onChange={(e) => setTag(e.target.value)}
+                      placeholder="e.g. Best Seller, Freshly Baked"
+                      className="h-9 text-xs bg-[#0D121D] border border-white/10 text-white placeholder:text-slate-500 focus:border-cyan-500/50"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

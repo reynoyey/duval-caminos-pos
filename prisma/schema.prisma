@@ -210,8 +210,8 @@ model OrderItem {
 
   orderId   String
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   modifiers OrderItemModifier[]
 
@@ -252,3 +252,18 @@ model Payment {
   @@index([orderId])
   @@index([method])
 }
+
+// ----------------------------------------------------------------------------
+//  SETTINGS / CONFIGURATION
+// ----------------------------------------------------------------------------
+
+model StoreSettings {
+  id           String   @id @default("default")
+  cashierName  String   @default("Alex Rivera")
+  storeName    String   @default("Duval Caminos Coffee")
+  storeTagline String   @default("Specialty Coffee POS & Kitchen Display")
+  storeAddress String   @default("Jl. Kebon Jeruk Raya No. 27, Kemanggisan, Palmerah, Jakarta Barat")
+  logoUrl      String   @default("/logo.jpg")
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus, Trash2, Pencil, TicketPercent, ShoppingCart, X, Coffee, MessageSquareText } from "lucide-react";
-import { cn, formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah, isPastryOrFood } from "@/lib/utils";
 import { useCartStore, useCartTotals, type CartLine } from "@/stores/cart-store";
 import { TAX_RATE_PERCENT } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
@@ -97,14 +97,14 @@ export function CartPanel({ onEditLine, onOpenDiscount, onCheckout, className }:
                     type="button"
                     className="min-w-0 flex-1 text-left"
                     onClick={() => onEditLine(l)}
-                    disabled={l.modifiers.length === 0 && !l.isBeverage}
-                    title="Klik untuk ubah modifier"
+                    disabled={isPastryOrFood(l) || (l.modifiers.length === 0 && !l.isBeverage)}
+                    title={isPastryOrFood(l) ? undefined : "Klik untuk ubah modifier"}
                   >
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
                         {l.productName}
                       </span>
-                      {(l.modifiers.length > 0 || l.isBeverage) && (
+                      {!isPastryOrFood(l) && (l.modifiers.length > 0 || l.isBeverage) && (
                         <Pencil className="w-3 h-3 text-slate-400 opacity-70 group-hover:opacity-100" />
                       )}
                     </div>

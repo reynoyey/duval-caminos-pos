@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Search, X, Plus, Sparkles, AlertCircle, PlusCircle } from "lucide-react";
-import { cn, formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah, isPastryOrFood } from "@/lib/utils";
 import type { CatalogDTO, ProductDTO } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { useMenuStore } from "@/stores/menu-store";
@@ -177,7 +177,8 @@ export function MenuCatalog({ catalog, onPick, onOpenAddModal, onOpenMenuManager
             const inCart = qtyByProduct[product.id] ?? 0;
             const slug = slugById[product.categoryId] ?? "espresso";
             const theme = CATEGORY_THEME[slug] ?? DEFAULT_THEME;
-            const hasModifiers = product.modifierGroups && product.modifierGroups.length > 0;
+            const isPastry = isPastryOrFood(product);
+            const hasModifiers = !isPastry && product.modifierGroups && product.modifierGroups.length > 0;
 
             return (
               <button

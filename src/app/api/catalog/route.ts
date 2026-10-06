@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_CATALOG, DEFAULT_MODIFIER_GROUPS } from "@/lib/mock-data";
-import type { CatalogDTO, ProductDTO } from "@/lib/types";
+import { prisma } from "@/lib/prisma";
+import type { ProductDTO } from "@/lib/types";
+import { isPastryOrFood, sanitizeProductModifiers } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 // Server-side cache for instant multi-device sync
 let inMemoryProducts: ProductDTO[] = [];
+let inMemoryDeletedIds: string[] = [];
 
 // Ensure default categories exist in Postgres
-async function ensureCategories(prisma: any) {
+async function ensureCategories() {
+  if (!prisma) return;
   for (const cat of DEFAULT_CATALOG.categories) {
     await prisma.category.upsert({
       where: { id: cat.id },
@@ -27,56 +31,84 @@ async function ensureCategories(prisma: any) {
 /** GET /api/catalog — Returns latest categories and products */
 export async function GET() {
   try {
-    if (process.env.DATABASE_URL) {
-      const { prisma } = await import("@/lib/prisma");
-      if (prisma) {
-        await ensureCategories(prisma);
-        const categories = await prisma.category.findMany({
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-          include: {
-            products: {
-              orderBy: { createdAt: "desc" },
-            },
+    if (prisma) {
+      await ensureCategories();
+      const categories = await prisma.category.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        include: {
+          products: {
+            orderBy: { createdAt: "desc" },
           },
-        });
+        },
+      });
 
-        if (categories && categories.length > 0) {
-          const dbProducts: ProductDTO[] = categories.flatMap((c: any) =>
-            (c.products || []).map((p: any) => ({
+      if (categories && categories.length > 0) {
+        const dbProducts: ProductDTO[] = categories.flatMap((c: any) =>
+          (c.products || []).map((p: any) => {
+            const isPastry = isPastryOrFood({
+              categoryId: c.id,
+              categoryName: c.name,
+              slug: c.slug,
+              isBeverage: p.isBeverage,
+            });
+            const isBeverage = isPastry ? false : p.isBeverage;
+            return {
               id: p.id,
               sku: p.sku,
               name: p.name,
               description: p.description,
               basePrice: p.basePrice,
-              isBeverage: p.isBeverage,
+              isBeverage,
               isAvailable: p.isAvailable,
               tag: p.tag,
               categoryId: c.id,
               categoryName: c.name,
-              modifierGroups: p.isBeverage ? DEFAULT_MODIFIER_GROUPS : [],
+              modifierGroups: isBeverage ? DEFAULT_MODIFIER_GROUPS : [],
               createdAt: p.createdAt?.toISOString?.() || new Date().toISOString(),
-            }))
-          );
+              updatedAt: p.updatedAt?.toISOString?.() || new Date().toISOString(),
+            };
+          })
+        );
 
-          // Merge with in-memory if in-memory has any unpersisted products
-          const productMap = new Map<string, ProductDTO>();
-          for (const p of inMemoryProducts) productMap.set(p.id, p);
-          for (const p of dbProducts) productMap.set(p.id, p);
+        // Merge with in-memory if in-memory has any unpersisted products
+        const deletedSet = new Set(inMemoryDeletedIds);
+        const productMap = new Map<string, ProductDTO>();
 
-          const allProducts = Array.from(productMap.values());
-          inMemoryProducts = allProducts;
-
-          return NextResponse.json({
-            categories: categories.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              slug: c.slug,
-              icon: c.icon,
-            })),
-            products: allProducts,
-          });
+        for (const p of dbProducts) {
+          if (!deletedSet.has(p.id)) {
+            productMap.set(p.id, sanitizeProductModifiers(p));
+          }
         }
+
+        for (const p of inMemoryProducts) {
+          if (!deletedSet.has(p.id)) {
+            const existing = productMap.get(p.id);
+            if (!existing) {
+              productMap.set(p.id, sanitizeProductModifiers(p));
+            } else {
+              const pTime = new Date((p as any).updatedAt || p.createdAt || 0).getTime();
+              const exTime = new Date((existing as any).updatedAt || existing.createdAt || 0).getTime();
+              if (pTime >= exTime) {
+                productMap.set(p.id, sanitizeProductModifiers(p));
+              }
+            }
+          }
+        }
+
+        const allProducts = Array.from(productMap.values());
+        inMemoryProducts = allProducts;
+
+        return NextResponse.json({
+          categories: categories.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            icon: c.icon,
+          })),
+          products: allProducts,
+          deletedProductIds: inMemoryDeletedIds,
+        });
       }
     }
   } catch (err) {
@@ -84,9 +116,11 @@ export async function GET() {
   }
 
   // Fallback to in-memory products + default categories
+  const deletedSet = new Set(inMemoryDeletedIds);
   return NextResponse.json({
     categories: DEFAULT_CATALOG.categories,
-    products: inMemoryProducts,
+    products: inMemoryProducts.filter((p) => !deletedSet.has(p.id)).map(sanitizeProductModifiers),
+    deletedProductIds: inMemoryDeletedIds,
   });
 }
 
@@ -97,56 +131,75 @@ export async function POST(req: Request) {
 
     // Reset action
     if (body.action === "RESET") {
+      const deletedIds = inMemoryProducts.map((p) => p.id);
+      inMemoryDeletedIds = Array.from(new Set([...inMemoryDeletedIds, ...deletedIds])).slice(-200);
       inMemoryProducts = [];
-      if (process.env.DATABASE_URL) {
-        const { prisma } = await import("@/lib/prisma");
-        if (prisma) {
-          await prisma.product.deleteMany({}).catch(() => null);
-        }
+
+      if (prisma) {
+        await prisma.productModifierGroup.deleteMany({}).catch(() => null);
+        await prisma.product.deleteMany({}).catch(() => null);
       }
-      return NextResponse.json({ success: true, products: [] });
+      return NextResponse.json({ success: true, products: [], deletedProductIds: inMemoryDeletedIds });
     }
 
-    const product: ProductDTO = body.product || body;
+    let product: ProductDTO = body.product || body;
     if (!product || !product.id || !product.name) {
       return NextResponse.json({ error: "Invalid product data" }, { status: 400 });
     }
 
+    product = sanitizeProductModifiers(product);
+    const nowIso = new Date().toISOString();
+    product.updatedAt = product.updatedAt || nowIso;
+    product.createdAt = product.createdAt || nowIso;
+
+    // Remove from in-memory deleted list if re-added
+    inMemoryDeletedIds = inMemoryDeletedIds.filter((id) => id !== product.id);
+
     // Update in-memory cache
     inMemoryProducts = [product, ...inMemoryProducts.filter((p) => p.id !== product.id)];
 
-    // Persist to Postgres if available
-    if (process.env.DATABASE_URL) {
-      const { prisma } = await import("@/lib/prisma");
-      if (prisma) {
-        await ensureCategories(prisma);
-        await prisma.product.upsert({
-          where: { id: product.id },
-          update: {
-            name: product.name,
-            sku: product.sku,
-            description: product.description || null,
-            basePrice: product.basePrice,
-            isBeverage: product.isBeverage,
-            isAvailable: product.isAvailable,
-            tag: product.tag || null,
-            categoryId: product.categoryId,
-          },
-          create: {
-            id: product.id,
-            sku: product.sku,
-            name: product.name,
-            description: product.description || null,
-            basePrice: product.basePrice,
-            isBeverage: product.isBeverage,
-            isAvailable: product.isAvailable,
-            tag: product.tag || null,
-            categoryId: product.categoryId,
-          },
-        }).catch((e: any) => {
-          console.warn("[POST /api/catalog] DB upsert product error:", e);
+    // Persist to Postgres
+    if (prisma) {
+      await ensureCategories();
+
+      // Check if SKU collides with another product ID
+      let finalSku = product.sku;
+      try {
+        const existingWithSku = await prisma.product.findUnique({
+          where: { sku: product.sku },
         });
-      }
+        if (existingWithSku && existingWithSku.id !== product.id) {
+          finalSku = `${product.sku}-${product.id.slice(-4)}`;
+          product.sku = finalSku;
+        }
+      } catch {}
+
+      await prisma.product.upsert({
+        where: { id: product.id },
+        update: {
+          name: product.name,
+          sku: finalSku,
+          description: product.description || null,
+          basePrice: product.basePrice,
+          isBeverage: product.isBeverage,
+          isAvailable: product.isAvailable,
+          tag: product.tag || null,
+          categoryId: product.categoryId,
+        },
+        create: {
+          id: product.id,
+          sku: finalSku,
+          name: product.name,
+          description: product.description || null,
+          basePrice: product.basePrice,
+          isBeverage: product.isBeverage,
+          isAvailable: product.isAvailable,
+          tag: product.tag || null,
+          categoryId: product.categoryId,
+        },
+      }).catch((e: any) => {
+        console.warn("[POST /api/catalog] DB upsert product error:", e);
+      });
     }
 
     return NextResponse.json({ success: true, product });
@@ -167,25 +220,23 @@ export async function PATCH(req: Request) {
     // Update in-memory cache
     inMemoryProducts = inMemoryProducts.map((p) => {
       if (p.id !== id) return p;
-      return {
+      return sanitizeProductModifiers({
         ...p,
         ...updates,
         isAvailable: isAvailable !== undefined ? isAvailable : p.isAvailable,
-      };
+        updatedAt: new Date().toISOString(),
+      });
     });
 
     // Update in Postgres
-    if (process.env.DATABASE_URL) {
-      const { prisma } = await import("@/lib/prisma");
-      if (prisma) {
-        await prisma.product.update({
-          where: { id },
-          data: {
-            ...(isAvailable !== undefined && { isAvailable }),
-            ...updates,
-          },
-        }).catch(() => null);
-      }
+    if (prisma) {
+      await prisma.product.update({
+        where: { id },
+        data: {
+          ...(isAvailable !== undefined && { isAvailable }),
+          ...updates,
+        },
+      }).catch(() => null);
     }
 
     return NextResponse.json({ success: true, id, isAvailable });
@@ -205,12 +256,11 @@ export async function DELETE(req: Request) {
     }
 
     inMemoryProducts = inMemoryProducts.filter((p) => p.id !== id);
+    inMemoryDeletedIds = Array.from(new Set([...inMemoryDeletedIds, id])).slice(-200);
 
-    if (process.env.DATABASE_URL) {
-      const { prisma } = await import("@/lib/prisma");
-      if (prisma) {
-        await prisma.product.delete({ where: { id } }).catch(() => null);
-      }
+    if (prisma) {
+      await prisma.productModifierGroup.deleteMany({ where: { productId: id } }).catch(() => null);
+      await prisma.product.delete({ where: { id } }).catch(() => null);
     }
 
     return NextResponse.json({ success: true, id });

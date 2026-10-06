@@ -8,14 +8,20 @@ export const dynamic = "force-dynamic";
 
 /** GET /api/shifts — current open shift + live summary (for close-shift screen). */
 export async function GET() {
-  const shift = await prisma.shift.findFirst({ where: { status: "OPEN" }, orderBy: { openedAt: "desc" } });
-  if (!shift) return NextResponse.json({ shift: null, summary: null });
+  try {
+    if (!prisma) return NextResponse.json({ shift: null, summary: null });
+    const shift = await prisma.shift.findFirst({ where: { status: "OPEN" }, orderBy: { openedAt: "desc" } });
+    if (!shift) return NextResponse.json({ shift: null, summary: null });
 
-  const orders = await prisma.order.findMany({ where: { shiftId: shift.id }, include: reportOrderInclude });
-  return NextResponse.json({
-    shift: { ...shift, openedAt: shift.openedAt.toISOString() },
-    summary: summarize(orders, shift.openingCash),
-  });
+    const orders = await prisma.order.findMany({ where: { shiftId: shift.id }, include: reportOrderInclude });
+    return NextResponse.json({
+      shift: { ...shift, openedAt: shift.openedAt.toISOString() },
+      summary: summarize(orders, shift.openingCash),
+    });
+  } catch (err) {
+    console.warn("[GET /api/shifts] Safe fallback catch:", err);
+    return NextResponse.json({ shift: null, summary: null });
+  }
 }
 
 const OpenShiftSchema = z.object({

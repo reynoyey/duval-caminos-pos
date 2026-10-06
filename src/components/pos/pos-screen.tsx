@@ -21,7 +21,8 @@ import { SettingsDialog } from "./settings-dialog";
 import { PinLockScreen } from "./pin-lock-screen";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useOrdersStore } from "@/stores/orders-store";
-import { subscribeToMenu, subscribeToOrders } from "@/lib/supabase";
+import { subscribeToMenu, subscribeToOrders, subscribeToSettings } from "@/lib/supabase";
+import { isPastryOrFood } from "@/lib/utils";
 
 interface Props {
   initialCatalog: CatalogDTO;
@@ -53,6 +54,8 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   }, []);
 
   const cashierName = useSettingsStore((s) => s.cashierName);
+  const fetchLatestSettings = useSettingsStore((s) => s.fetchLatestSettings);
+  const applyRemoteSettingsEvent = useSettingsStore((s) => s.applyRemoteSettingsEvent);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -76,9 +79,10 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
     if (initialCatalog && initialCatalog.products.length > 0) {
       hydrateCatalog(initialCatalog);
     }
-    // Background cloud catalog and orders sync
+    // Background cloud catalog, orders, and store settings sync
     fetchLatestCatalog().catch(() => null);
     fetchLatestOrders().catch(() => null);
+    fetchLatestSettings().catch(() => null);
 
     // 1. Subscribe to realtime menu events across devices
     const unsubMenu = subscribeToMenu((event) => {
@@ -103,14 +107,27 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       }
     });
 
+    // 3. Subscribe to realtime settings across devices (cashier name, logo, store name)
+    const unsubSettings = subscribeToSettings((event) => {
+      applyRemoteSettingsEvent(event);
+      if (event.settings.cashierName) {
+        toast.info(`Nama kasir disinkronkan: "${event.settings.cashierName}"`);
+      }
+      if (event.settings.logoUrl) {
+        toast.info("Logo toko telah disinkronkan");
+      }
+    });
+
     const interval = setInterval(() => {
       fetchLatestCatalog().catch(() => null);
       fetchLatestOrders().catch(() => null);
+      fetchLatestSettings().catch(() => null);
     }, 3500);
 
     const onFocus = () => {
       fetchLatestCatalog().catch(() => null);
       fetchLatestOrders().catch(() => null);
+      fetchLatestSettings().catch(() => null);
     };
     window.addEventListener("focus", onFocus);
 
@@ -119,8 +136,19 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       window.removeEventListener("focus", onFocus);
       try { unsubMenu?.(); } catch {}
       try { unsubOrders?.(); } catch {}
+      try { unsubSettings?.(); } catch {}
     };
-  }, [initialCatalog, hydrateCatalog, fetchLatestCatalog, fetchLatestOrders, applyRemoteMenuEvent, addOrder, updateOrderStatus]);
+  }, [
+    initialCatalog,
+    hydrateCatalog,
+    fetchLatestCatalog,
+    fetchLatestOrders,
+    fetchLatestSettings,
+    applyRemoteMenuEvent,
+    applyRemoteSettingsEvent,
+    addOrder,
+    updateOrderStatus,
+  ]);
 
   // Handle product click
   const handleProductPick = (product: ProductDTO) => {
@@ -129,10 +157,18 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
       return;
     }
 
-    // If product has no modifiers, add directly to cart (e.g. pastries)
-    if (!product.modifierGroups || product.modifierGroups.length === 0) {
+    const isPastry = isPastryOrFood(product);
+
+    // If pastry or product has no modifiers, add directly to cart (no customization dialog)
+    if (isPastry || !product.modifierGroups || product.modifierGroups.length === 0) {
       addLine({
-        product,
+        product: {
+          id: product.id,
+          name: product.name,
+          categoryName: product.categoryName,
+          isBeverage: false,
+          basePrice: product.basePrice,
+        },
         modifiers: [],
         quantity: 1,
       });
@@ -147,7 +183,7 @@ export function PosScreen({ initialCatalog, initialShift }: Props) {
   // Handle edit cart line
   const handleEditLine = (line: CartLine) => {
     const fullProduct = products.find((p) => p.id === line.productId);
-    if (!fullProduct || !fullProduct.modifierGroups || fullProduct.modifierGroups.length === 0) {
+    if (!fullProduct || isPastryOrFood(fullProduct) || !fullProduct.modifierGroups || fullProduct.modifierGroups.length === 0) {
       return;
     }
     editModifier(fullProduct, line);
